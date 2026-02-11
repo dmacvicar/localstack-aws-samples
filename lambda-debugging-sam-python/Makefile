@@ -1,4 +1,4 @@
-.PHONY: usage install build build-docker build-local build-sam wait deploy deploy-aws deploy-sam invoke clean start stop ready test-ci
+.PHONY: usage install build build-docker build-local build-sam wait deploy deploy-aws deploy-aws-hot-reload enable-hot-reload deploy-sam invoke clean start stop ready test-ci
 
 AWS_ENDPOINT_URL ?= http://localhost.localstack.cloud:4566
 AWS ?= AWS_ENDPOINT_URL=$(AWS_ENDPOINT_URL) \
@@ -56,11 +56,27 @@ deploy-aws:           ## Deploy the Lambda function via AWS CLI
 	--zip-file fileb://hello_world/hello_world_python.zip \
 	--timeout 2
 
+deploy-aws-hot-reload:           ## Deploy the Lambda function with hot reload via AWS CLI
+	$(AWS) lambda create-function \
+	--function-name $(FUNCTION_NAME) \
+	--runtime $(LAMBDA_RUNTIME) \
+	--role arn:aws:iam::000000000000:role/lambda-role \
+	--handler app.lambda_handler \
+	--code S3Bucket="hot-reload",S3Key="/$$PWD/hello_world" \
+	--timeout 2
+
+enable-hot-reload:           ## Enable hot reload via AWS CLI
+	$(AWS) lambda update-function-code \
+	--function-name $(FUNCTION_NAME) \
+	--s3-bucket "hot-reload" \
+	--s3-key "$$PWD/hello_world"
+
 deploy-sam:           ## Deploy the Lambda function via AWS SAM CLI
 	$(SAM) deploy
 
 invoke:               ## Invoke the Lambda function and show logs
 	AWS_MAX_ATTEMPTS=1 $(AWS) lambda invoke --function-name $(FUNCTION_NAME) \
+	--cli-binary-format raw-in-base64-out \
 	--payload file://events/event.json \
 	--cli-connect-timeout 3600 \
 	--cli-read-timeout 3600 \
