@@ -1,6 +1,8 @@
 name: Run LocalStack Pro Samples
 
 on:
+  push:
+    branches: [main, master]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
