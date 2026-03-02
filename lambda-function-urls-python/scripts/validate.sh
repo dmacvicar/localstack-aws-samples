@@ -17,13 +17,15 @@ if [ -z "$FUNCTION_INFO" ]; then
 fi
 echo "✓ Lambda function 'trending' exists"
 
-# Check function state is Active
+# Check function state is Active (wait if Pending)
 FUNCTION_STATE=$(echo "$FUNCTION_INFO" | jq -r '.Configuration.State')
 if [ "$FUNCTION_STATE" != "Active" ]; then
-    echo "ERROR: Lambda function state is '$FUNCTION_STATE', expected 'Active'"
-    exit 1
+    echo "Lambda function state is '$FUNCTION_STATE', waiting for it to become Active..."
+    awslocal lambda wait function-active-v2 --function-name trending
+    echo "✓ Lambda function is now Active"
+else
+    echo "✓ Lambda function state is Active"
 fi
-echo "✓ Lambda function state is Active"
 
 # Check function URL config exists
 echo "Checking function URL configuration..."

@@ -192,26 +192,31 @@ jobs:
 
           ls -la badges/
 
-      - name: Upload Status JSON
-        if: needs.build-matrix.outputs.has_samples == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: sample-status
-          path: status.json
-
       - name: Update Status Branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.build-matrix.outputs.has_samples == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create orphan branch for status if it doesn't exist
-          git fetch origin status:status 2>/dev/null || git checkout --orphan status
-          git checkout status 2>/dev/null || git checkout --orphan status
+          # Fetch or create status branch
+          git fetch origin status:status 2>/dev/null || true
 
-          cp status.json . 2>/dev/null || true
-          git add status.json
-          git commit -m "Update sample status [skip ci]" || true
+          # Save badges to temp location
+          cp -r badges /tmp/badges
+
+          # Switch to status branch (create if needed)
+          if git show-ref --verify --quiet refs/heads/status; then
+            git checkout status
+          else
+            git checkout --orphan status
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Copy badges and commit
+          mkdir -p badges
+          cp -r /tmp/badges/* badges/
+          git add badges/
+          git commit -m "Update sample badges [skip ci]" || true
           git push origin status || true
 
       - name: Check Results
