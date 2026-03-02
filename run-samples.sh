@@ -11,11 +11,12 @@ export PATH="$SCRIPT_DIR/bin:$PATH"
 # Sample definitions: "path|ci_command"
 # Runs install + run (LocalStack managed externally by CI workflow)
 # Only includes samples using services available in LocalStack license
-# Only samples that are verified working with current license
+# Sample definitions: "path|deploy_command|test_command"
+# Pattern matches Azure samples: deploy, then validate+test
 SAMPLES=(
-  "lambda-function-urls-python|make install && make run"
-  "lambda-function-urls-javascript|make install && make run"
-  "stepfunctions-lambda|make install && make create-lambdas"
+  "lambda-function-urls-python|make install && make run|bash scripts/validate.sh && bash scripts/test.sh"
+  "lambda-function-urls-javascript|make install && make run|"
+  "stepfunctions-lambda|make install && make create-lambdas|bash scripts/validate.sh && bash scripts/test.sh"
 )
 
 # Colors for output
@@ -64,7 +65,7 @@ list_samples() {
   local total=${#SAMPLES[@]}
 
   for sample_def in "${SAMPLES[@]}"; do
-    IFS='|' read -r path ci_cmd <<< "$sample_def"
+    IFS='|' read -r path deploy_cmd test_cmd <<< "$sample_def"
     local name=$(basename "$path")
 
     if [ "$first" = true ]; then
@@ -124,7 +125,7 @@ cleanup() {
 # Run a single sample
 run_sample() {
   local sample_def=$1
-  IFS='|' read -r path ci_cmd <<< "$sample_def"
+  IFS='|' read -r path deploy_cmd test_cmd <<< "$sample_def"
   local name=$(basename "$path")
 
   log_info "=========================================="
@@ -140,12 +141,22 @@ run_sample() {
 
   pushd "$path" > /dev/null
 
-  # Run CI command
-  log_info "Running: $ci_cmd"
-  if ! eval "$ci_cmd"; then
-    log_error "Test failed for $name"
+  # Deploy
+  log_info "Deploying: $deploy_cmd"
+  if ! eval "$deploy_cmd"; then
+    log_error "Deploy failed for $name"
     popd > /dev/null
     return 1
+  fi
+
+  # Test (if defined)
+  if [ -n "$test_cmd" ]; then
+    log_info "Testing: $test_cmd"
+    if ! eval "$test_cmd"; then
+      log_error "Test failed for $name"
+      popd > /dev/null
+      return 1
+    fi
   fi
 
   log_info "Sample $name completed successfully"
@@ -158,7 +169,7 @@ run_sample() {
 find_sample() {
   local name=$1
   for sample_def in "${SAMPLES[@]}"; do
-    IFS='|' read -r path ci_cmd <<< "$sample_def"
+    IFS='|' read -r path deploy_cmd test_cmd <<< "$sample_def"
     local sample_name=$(basename "$path")
     if [ "$sample_name" = "$name" ]; then
       echo "$sample_def"
