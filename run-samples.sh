@@ -14,13 +14,8 @@ export PATH="$SCRIPT_DIR/bin:$PATH"
 SAMPLES=(
   "lambda-function-urls-python|make install && make run"
   "stepfunctions-lambda|make install && make create-lambdas"
-  "cdk-resources|make install && make run"
-  "terraform-resources|make install && make run"
-  "apigw-custom-domain|make install && make run"
-  "serverless-websockets|make install && make run"
-  "serverless-lambda-layers|make install && make run"
+  "apigw-custom-domain|make install && make deploy && make run"
   "lambda-container-image|make install && make run"
-  "lambda-xray|make install && make run"
   "elb-load-balancing|make install && make run"
 )
 

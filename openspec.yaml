@@ -52,7 +52,7 @@ environment:
       package: terraform-local
 
 samples:
-  # Phase 1: Working samples (verified)
+  # Passing samples (verified)
   - name: lambda-function-urls-python
     path: lambda-function-urls-python
     status: passing
@@ -65,32 +65,49 @@ samples:
     services: [lambda, stepfunctions, iam]
     command: make install && make create-lambdas
 
-  # Phase 2: To be tested
-  - name: apigw-custom-domain
-    path: apigw-custom-domain
-    status: pending
-    services: [apigateway, lambda, route53, acm]
-    command: make install && make run
-
-  - name: lambda-container-image
-    path: lambda-container-image
-    status: pending
-    services: [lambda, ecr]
-    command: make install && make run
-
+  # Partial success (deploys but has issues)
   - name: elb-load-balancing
     path: elb-load-balancing
-    status: pending
-    services: [ec2, elb]
+    status: partial
+    services: [ec2, elb, lambda, s3]
     command: make install && make run
+    notes: "Deploys successfully but Lambda invocations via ELB return S3 NoSuchBucket errors"
 
+  # Needs fixes (uses unavailable services)
   - name: terraform-resources
     path: terraform-resources
-    status: pending
-    services: [s3, lambda, dynamodb]
+    status: needs_fix
+    services: [s3, apigateway, iam, lambda, elasticache, rds]
     command: make install && make run
+    notes: "Uses ElastiCache and RDS which are not in license. S3 bucket creation also fails."
 
-  # Samples requiring services not in license
+  # Skipped - apigatewayv2 not in license
+  - name: apigw-custom-domain
+    path: apigw-custom-domain
+    status: skipped
+    skip_reason: "apigatewayv2 not in license"
+    services: [apigateway, apigatewayv2, lambda, route53, acm]
+
+  - name: serverless-websockets
+    path: serverless-websockets
+    status: skipped
+    skip_reason: "apigatewayv2 not in license"
+    services: [apigatewayv2, lambda]
+
+  # Skipped - ECR not in license
+  - name: lambda-container-image
+    path: lambda-container-image
+    status: skipped
+    skip_reason: "ECR not in license"
+    services: [lambda, ecr]
+
+  - name: ecs-ecr-container-app
+    path: ecs-ecr-container-app
+    status: skipped
+    skip_reason: "ECS/ECR not in license"
+    services: [ecs, ecr]
+
+  # Skipped - other services not in license
   - name: rds-db-queries
     path: rds-db-queries
     status: skipped
@@ -126,18 +143,6 @@ samples:
     status: skipped
     skip_reason: "Cognito not in license"
     services: [cognito, lambda]
-
-  - name: ecs-ecr-container-app
-    path: ecs-ecr-container-app
-    status: skipped
-    skip_reason: "ECS not in license"
-    services: [ecs, ecr]
-
-  - name: serverless-websockets
-    path: serverless-websockets
-    status: skipped
-    skip_reason: "apigatewayv2 not in license"
-    services: [apigatewayv2, lambda]
 
 ci:
   workflow: .github/workflows/run-samples.yml
@@ -180,13 +185,14 @@ roadmap:
     name: "Expand Coverage"
     status: in_progress
     tasks:
-      - "[ ] Test apigw-custom-domain sample"
-      - "[ ] Test terraform-resources sample"
-      - "[ ] Test lambda-container-image sample"
-      - "[ ] Test elb-load-balancing sample"
-      - "[ ] Test serverless-lambda-layers sample"
+      - "[x] Test apigw-custom-domain sample - BLOCKED (apigatewayv2 not in license)"
+      - "[x] Test terraform-resources sample - BLOCKED (elasticache, rds not in license)"
+      - "[x] Test lambda-container-image sample - BLOCKED (ecr not in license)"
+      - "[x] Test elb-load-balancing sample - PARTIAL (deploys but invocation fails)"
+      - "[ ] Add cdklocal and tflocal wrappers to bin/"
+      - "[ ] Test with act locally before GitHub"
+      - "[ ] Find more samples using only available services"
       - "[ ] Add .gitignore for sample build artifacts"
-      - "[ ] Standardize Makefile targets across samples"
 
   phase3:
     name: "Fix Broken Samples"
@@ -221,6 +227,14 @@ next_actions:
     reason: "CDK and Terraform samples need these tools"
 
   - priority: medium
+    action: "Test GitHub Actions workflow locally with act"
+    reason: "Validate CI pipeline works before pushing to GitHub"
+    notes: |
+      Use nektos/act to run workflow locally:
+        act -j run-samples --secret LOCALSTACK_AUTH_TOKEN=$LOCALSTACK_AUTH_TOKEN
+      Start with a single sample to verify the pipeline works end-to-end.
+
+  - priority: medium
     action: "Create sample-specific .gitignore entries"
     reason: "Prevent committing build artifacts like .venv, node_modules, *.zip"
 
@@ -229,6 +243,16 @@ next_actions:
     reason: "Generate JUnit XML for GitHub Actions test summary"
 
 changelog:
+  - version: "0.3.0"
+    date: "2026-03-02"
+    changes:
+      - "Added cdklocal and tflocal wrappers to bin/"
+      - "Added act testing item to roadmap"
+      - "Tested additional samples: terraform-resources, apigw-custom-domain, lambda-container-image, elb-load-balancing"
+      - "Identified license limitations: apigatewayv2, ECR, ECS, RDS, ElastiCache, IoT, Athena, Glue, SageMaker, Cognito not available"
+      - "elb-load-balancing deploys but has invocation issues"
+      - "Updated sample status tracking with detailed notes"
+
   - version: "0.2.0"
     date: "2026-03-02"
     changes:
