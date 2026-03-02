@@ -1,0 +1,177 @@
+openspec: "1.0"
+name: localstack-pro-samples-ci
+description: CI/CD pipeline for testing AWS samples against LocalStack Pro
+version: "0.1.0"
+
+repository:
+  url: https://github.com/localstack-samples/localstack-pro-samples
+  branch: master
+
+environment:
+  localstack:
+    image: localstack/localstack-pro:latest
+    services:
+      - acm
+      - apigateway
+      - cloudformation
+      - cloudwatch
+      - config
+      - dynamodb
+      - dynamodbstreams
+      - ec2
+      - es
+      - events
+      - firehose
+      - iam
+      - kinesis
+      - kms
+      - lambda
+      - logs
+      - opensearch
+      - redshift
+      - resource-groups
+      - route53
+      - s3
+      - secretsmanager
+      - ses
+      - sns
+      - sqs
+      - ssm
+      - stepfunctions
+      - sts
+      - swf
+      - transcribe
+
+  tools:
+    - name: awslocal
+      wrapper: bin/awslocal
+      backend: "uvx --with awscli --from awscli-local awslocal"
+    - name: cdklocal
+      package: aws-cdk-local
+    - name: tflocal
+      package: terraform-local
+
+samples:
+  # Phase 1: Working samples (verified)
+  - name: lambda-function-urls-python
+    path: lambda-function-urls-python
+    status: passing
+    services: [lambda]
+    command: make install && make run
+
+  - name: stepfunctions-lambda
+    path: stepfunctions-lambda
+    status: passing
+    services: [lambda, stepfunctions, iam]
+    command: make install && make create-lambdas
+
+  # Phase 2: To be tested
+  - name: apigw-custom-domain
+    path: apigw-custom-domain
+    status: pending
+    services: [apigateway, lambda, route53, acm]
+    command: make install && make run
+
+  - name: lambda-container-image
+    path: lambda-container-image
+    status: pending
+    services: [lambda, ecr]
+    command: make install && make run
+
+  - name: elb-load-balancing
+    path: elb-load-balancing
+    status: pending
+    services: [ec2, elb]
+    command: make install && make run
+
+  - name: terraform-resources
+    path: terraform-resources
+    status: pending
+    services: [s3, lambda, dynamodb]
+    command: make install && make run
+
+  # Samples requiring services not in license
+  - name: rds-db-queries
+    path: rds-db-queries
+    status: skipped
+    skip_reason: "RDS not in license"
+    services: [rds]
+
+  - name: iot-basics
+    path: iot-basics
+    status: skipped
+    skip_reason: "IoT not in license"
+    services: [iot]
+
+  - name: athena-s3-queries
+    path: athena-s3-queries
+    status: skipped
+    skip_reason: "Athena not in license"
+    services: [athena, s3]
+
+  - name: glue-etl-jobs
+    path: glue-etl-jobs
+    status: skipped
+    skip_reason: "Glue not in license"
+    services: [glue, s3]
+
+  - name: sagemaker-inference
+    path: sagemaker-inference
+    status: skipped
+    skip_reason: "SageMaker not in license"
+    services: [sagemaker]
+
+  - name: cognito-jwt
+    path: cognito-jwt
+    status: skipped
+    skip_reason: "Cognito not in license"
+    services: [cognito, lambda]
+
+  - name: ecs-ecr-container-app
+    path: ecs-ecr-container-app
+    status: skipped
+    skip_reason: "ECS not in license"
+    services: [ecs, ecr]
+
+  - name: serverless-websockets
+    path: serverless-websockets
+    status: skipped
+    skip_reason: "apigatewayv2 not in license"
+    services: [apigatewayv2, lambda]
+
+ci:
+  workflow: .github/workflows/run-samples.yml
+  orchestrator: run-samples.sh
+  matrix_builder: .github/scripts/build-matrix.sh
+
+  triggers:
+    - pull_request:
+        branches: [main, master]
+    - workflow_dispatch:
+        inputs:
+          mode: [changed, all]
+
+  features:
+    - dynamic_matrix_generation
+    - change_detection
+    - parallel_execution
+    - sharding
+
+infrastructure_files:
+  - run-samples.sh
+  - Makefile
+  - .github/workflows/run-samples.yml
+  - .github/scripts/build-matrix.sh
+
+changelog:
+  - version: "0.1.0"
+    date: "2026-03-02"
+    changes:
+      - "Initial CI pipeline setup"
+      - "Created run-samples.sh orchestrator"
+      - "Created GitHub Actions workflow"
+      - "Created dynamic matrix builder"
+      - "Created awslocal wrapper using uvx"
+      - "Verified lambda-function-urls-python sample"
+      - "Verified stepfunctions-lambda sample"
+      - "Identified samples requiring services not in license"

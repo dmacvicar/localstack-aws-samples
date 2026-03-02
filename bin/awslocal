@@ -1,0 +1,3 @@
+#!/bin/bash
+# Wrapper for awslocal using uvx
+exec uvx --with awscli --from awscli-local awslocal "$@"

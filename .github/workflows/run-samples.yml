@@ -1,0 +1,140 @@
+name: Run LocalStack Pro Samples
+
+on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        type: choice
+        options:
+          - changed
+          - all
+        default: changed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+  LOCALSTACK_IMAGE: localstack/localstack-pro:latest
+
+jobs:
+  build-matrix:
+    name: Build Test Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      has_samples: ${{ steps.matrix.outputs.has_samples }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Matrix
+        id: matrix
+        run: |
+          MODE="${{ github.event.inputs.mode || 'changed' }}"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          MATRIX=$(.github/scripts/build-matrix.sh --mode "$MODE" --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA")
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+          # Check if matrix has samples
+          SAMPLE_COUNT=$(echo "$MATRIX" | jq '.include | length')
+          if [ "$SAMPLE_COUNT" -gt 0 ]; then
+            echo "has_samples=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_samples=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Matrix: $MATRIX"
+          echo "Sample count: $SAMPLE_COUNT"
+
+  run-samples:
+    name: ${{ matrix.name }}
+    needs: build-matrix
+    if: needs.build-matrix.outputs.has_samples == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install LocalStack CLI
+        run: |
+          pip install localstack awscli-local
+          npm install -g aws-cdk-local aws-cdk
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull LocalStack Image
+        run: docker pull ${{ env.LOCALSTACK_IMAGE }}
+
+      - name: Start LocalStack
+        run: |
+          localstack start -d
+          echo "Waiting for LocalStack to be ready..."
+          localstack wait -t 60
+          echo "LocalStack is ready"
+
+      - name: Run Sample
+        run: |
+          chmod +x run-samples.sh
+          ./run-samples.sh --sample "${{ matrix.name }}"
+
+      - name: Show LocalStack Logs
+        if: failure()
+        run: localstack logs
+
+      - name: Stop LocalStack
+        if: always()
+        run: localstack stop || true
+
+  summary:
+    name: Test Summary
+    needs: [build-matrix, run-samples]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Results
+        run: |
+          if [ "${{ needs.build-matrix.outputs.has_samples }}" = "false" ]; then
+            echo "No samples to test (no changes detected)"
+            exit 0
+          fi
+
+          if [ "${{ needs.run-samples.result }}" = "success" ]; then
+            echo "All samples passed!"
+          elif [ "${{ needs.run-samples.result }}" = "skipped" ]; then
+            echo "Samples were skipped"
+          else
+            echo "Some samples failed"
+            exit 1
+          fi
