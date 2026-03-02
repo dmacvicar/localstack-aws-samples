@@ -91,13 +91,17 @@ jobs:
           npm install -g aws-cdk-local aws-cdk
 
       - name: Docker Login
+        if: env.DOCKERHUB_USERNAME != ''
         uses: docker/login-action@v3
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Pull LocalStack Image
         run: docker pull ${{ env.LOCALSTACK_IMAGE }}
+        continue-on-error: true
 
       - name: Start LocalStack
         run: |
@@ -107,9 +111,27 @@ jobs:
           echo "LocalStack is ready"
 
       - name: Run Sample
+        id: run
         run: |
           chmod +x run-samples.sh
           ./run-samples.sh --sample "${{ matrix.name }}"
+
+      - name: Save Result
+        if: always()
+        run: |
+          mkdir -p /tmp/results
+          if [ "${{ steps.run.outcome }}" = "success" ]; then
+            echo "passed" > /tmp/results/${{ matrix.name }}.txt
+          else
+            echo "failed" > /tmp/results/${{ matrix.name }}.txt
+          fi
+
+      - name: Upload Result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.name }}
+          path: /tmp/results/${{ matrix.name }}.txt
 
       - name: Show LocalStack Logs
         if: failure()
@@ -125,6 +147,70 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download All Results
+        if: needs.build-matrix.outputs.has_samples == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          path: results
+          pattern: result-*
+
+      - name: Generate Badge JSONs
+        if: needs.build-matrix.outputs.has_samples == 'true'
+        run: |
+          mkdir -p badges
+
+          for dir in results/result-*; do
+            if [ -d "$dir" ]; then
+              sample=$(basename "$dir" | sed 's/result-//')
+              status=$(cat "$dir"/*.txt 2>/dev/null || echo "unknown")
+
+              if [ "$status" = "passed" ]; then
+                color="brightgreen"
+                message="passing"
+              else
+                color="red"
+                message="failing"
+              fi
+
+              cat > "badges/${sample}.json" << EOF
+          {
+            "schemaVersion": 1,
+            "label": "$sample",
+            "message": "$message",
+            "color": "$color"
+          }
+          EOF
+              echo "Generated badges/${sample}.json"
+            fi
+          done
+
+          ls -la badges/
+
+      - name: Upload Status JSON
+        if: needs.build-matrix.outputs.has_samples == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-status
+          path: status.json
+
+      - name: Update Status Branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create orphan branch for status if it doesn't exist
+          git fetch origin status:status 2>/dev/null || git checkout --orphan status
+          git checkout status 2>/dev/null || git checkout --orphan status
+
+          cp status.json . 2>/dev/null || true
+          git add status.json
+          git commit -m "Update sample status [skip ci]" || true
+          git push origin status || true
+
       - name: Check Results
         run: |
           if [ "${{ needs.build-matrix.outputs.has_samples }}" = "false" ]; then
