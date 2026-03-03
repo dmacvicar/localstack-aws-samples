@@ -127,6 +127,17 @@ $AWS lambda create-function \
     --timeout 30 \
     --region "$REGION"
 
+# Wait for function to be active
+echo "Waiting for function to be active..."
+for i in {1..30}; do
+    STATE=$($AWS lambda get-function --function-name "$FUNCTION_NAME" --query 'Configuration.State' --output text --region "$REGION" 2>/dev/null || echo "Pending")
+    if [[ "$STATE" == "Active" ]]; then
+        echo "Function is active"
+        break
+    fi
+    sleep 2
+done
+
 # Get Lambda ARN
 LAMBDA_ARN=$($AWS lambda get-function \
     --function-name "$FUNCTION_NAME" \

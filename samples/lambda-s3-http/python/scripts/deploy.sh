@@ -124,6 +124,19 @@ $AWS lambda create-function \
     --environment "Variables={TABLE_NAME=$TABLE_NAME}" \
     --region "$REGION"
 
+# Wait for all Lambda functions to be active
+echo "Waiting for Lambda functions to be active..."
+for func_name in "$HTTP_FUNCTION" "$S3_FUNCTION" "$SQS_FUNCTION"; do
+    for i in {1..30}; do
+        STATE=$($AWS lambda get-function --function-name "$func_name" --query 'Configuration.State' --output text --region "$REGION" 2>/dev/null || echo "Pending")
+        if [[ "$STATE" == "Active" ]]; then
+            echo "  $func_name is active"
+            break
+        fi
+        sleep 2
+    done
+done
+
 # Get Lambda ARNs
 HTTP_ARN=$($AWS lambda get-function --function-name "$HTTP_FUNCTION" --query 'Configuration.FunctionArn' --output text --region "$REGION")
 S3_ARN=$($AWS lambda get-function --function-name "$S3_FUNCTION" --query 'Configuration.FunctionArn' --output text --region "$REGION")
