@@ -39,8 +39,9 @@ These are commonly used patterns that should be ported first:
 | serverless-websockets | apigw-websockets | python, javascript | serverless | WebSocket API |
 | serverless-lambda-layers | lambda-layers | javascript | serverless | Lambda layers |
 | apigw-custom-domain | apigw-custom-domain | javascript | serverless | Custom domain mapping |
-| terraform-resources | terraform-basics | - | terraform | Basic Terraform resources |
 | ecs-ecr-container-app | ecs-ecr-app | - | cloudformation | Container app on ECS |
+
+> **Note:** `terraform-resources` was removed - Terraform is an IaC option within each sample's `terraform/` directory, not a standalone sample.
 
 ## To Port - Medium Priority
 

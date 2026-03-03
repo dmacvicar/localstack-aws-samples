@@ -1,0 +1,58 @@
+{
+  "Comment": "A parallel state machine that demonstrates Step Functions orchestrating multiple Lambda functions",
+  "StartAt": "Parallel State",
+  "States": {
+    "Parallel State": {
+      "Type": "Parallel",
+      "Next": "Combine",
+      "Branches": [
+        {
+          "StartAt": "Adam",
+          "States": {
+            "Adam": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${ADAM_FUNCTION_ARN}",
+                "Payload": {
+                  "input.$": "$"
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Cole",
+          "States": {
+            "Cole": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${COLE_FUNCTION_ARN}",
+                "Payload": {
+                  "input.$": "$"
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      ]
+    },
+    "Combine": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${COMBINE_FUNCTION_ARN}",
+        "Payload": {
+          "input.$": "$"
+        }
+      },
+      "End": true
+    }
+  }
+}
