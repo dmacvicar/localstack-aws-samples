@@ -39,7 +39,8 @@ jobs:
       - name: Build matrix
         id: set-matrix
         env:
-          RUN_MODE: ${{ github.event.inputs.run_mode || env.DEFAULT_RUN_MODE }}
+          # Use 'all' for pushes to master/main, 'changed' for PRs
+          RUN_MODE: ${{ github.event.inputs.run_mode || (github.event_name == 'push' && 'all' || env.DEFAULT_RUN_MODE) }}
         run: |
           matrix=$(.github/scripts/build-matrix.sh)
           echo "Matrix: $matrix"
