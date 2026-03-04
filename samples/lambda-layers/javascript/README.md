@@ -2,8 +2,6 @@
 
 This sample demonstrates AWS Lambda Layers using the Serverless Framework with LocalStack.
 
-**Ported from:** [localstack-pro-samples/serverless-lambda-layers](https://github.com/localstack-samples/localstack-pro-samples/tree/master/serverless-lambda-layers)
-
 ## What it Does
 
 Lambda Layers allow you to share code and libraries across multiple Lambda functions without bundling them into each function's deployment package.
@@ -53,8 +51,8 @@ This sample:
 
 | File | Description |
 |------|-------------|
-| `src/handler.js` | Lambda function that uses the layer |
-| `src/layer/nodejs/lib.js` | Shared library (packaged as layer) |
+| `handler.js` | Lambda function that uses the layer |
+| `layer/nodejs/lib.js` | Shared library (packaged as layer) |
 | `serverless.yml` | Serverless Framework configuration |
 | `scripts/deploy.sh` | Deployment script |
 | `scripts/test.sh` | Test script with validation |
@@ -65,7 +63,7 @@ Lambda layers for Node.js must follow this structure:
 ```
 layer/
 └── nodejs/
-    └── lib.js    # Available as /opt/nodejs/lib.js at runtime
+    └── lib.js    # Extracted to /opt/nodejs/lib.js at runtime
 ```
 
 ## Tests

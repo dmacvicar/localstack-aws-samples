@@ -5,7 +5,6 @@ set -euo pipefail
 # Lambda Layers - Deployment Script (JavaScript/Serverless)
 #
 # Deploys Lambda function with shared layer using Serverless Framework.
-# Ported from: https://github.com/localstack-samples/localstack-pro-samples/tree/master/serverless-lambda-layers
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Infrastructure - VPC, Cluster, and IAM Roles
+
+Parameters:
+  VpcCIDR:
+    Type: String
+    Default: 10.0.0.0/16
+
+Resources:
+  # VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: ecs-ecr-sample-vpc
+
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Public Subnet
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: ecs-ecr-sample-public-subnet
+
+  # Route Table
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # Security Group
+  ContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ECS containers
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  # ECS Cluster
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: ecs-ecr-sample-cluster
+
+  # IAM Role for ECS Task Execution
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ecs-ecr-sample-task-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+    Export:
+      Name: EcsEcrSampleVpcId
+
+  SubnetId:
+    Value: !Ref PublicSubnet
+    Export:
+      Name: EcsEcrSampleSubnetId
+
+  SecurityGroupId:
+    Value: !Ref ContainerSecurityGroup
+    Export:
+      Name: EcsEcrSampleSecurityGroupId
+
+  ClusterName:
+    Value: !Ref ECSCluster
+    Export:
+      Name: EcsEcrSampleClusterName
+
+  ClusterArn:
+    Value: !GetAtt ECSCluster.Arn
+    Export:
+      Name: EcsEcrSampleClusterArn
+
+  TaskExecutionRoleArn:
+    Value: !GetAtt ECSTaskExecutionRole.Arn
+    Export:
+      Name: EcsEcrSampleTaskExecutionRoleArn

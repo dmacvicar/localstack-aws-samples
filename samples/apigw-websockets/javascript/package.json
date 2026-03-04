@@ -1,0 +1,15 @@
+{
+  "name": "apigw-websockets-sample",
+  "version": "1.0.0",
+  "description": "API Gateway WebSockets with LocalStack",
+  "private": true,
+  "scripts": {
+    "deploy": "./scripts/deploy.sh",
+    "test": "./scripts/test.sh"
+  },
+  "devDependencies": {
+    "serverless": "^3.40.0",
+    "serverless-deployment-bucket": "^1.6.0",
+    "serverless-localstack": "^1.2.0"
+  }
+}

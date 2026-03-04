@@ -1,0 +1,48 @@
+service: apigw-websockets-sample
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'us-east-1'}
+  deploymentBucket:
+    name: apigw-websockets-deployment
+
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!scripts/**"
+    - "!.env"
+
+plugins:
+  - serverless-deployment-bucket
+  - serverless-localstack
+
+custom:
+  localstack:
+    stages:
+      - local
+    host: http://localhost
+    edgePort: 4566
+
+functions:
+  connectionHandler:
+    handler: handler.handler
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+
+  defaultHandler:
+    handler: handler.handler
+    events:
+      - websocket:
+          route: $default
+          routeResponseSelectionExpression: $default
+
+  actionHandler:
+    handler: handler.handler
+    events:
+      - websocket:
+          route: test-action
+          routeResponseSelectionExpression: $default

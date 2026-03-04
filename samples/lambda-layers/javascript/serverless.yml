@@ -9,7 +9,7 @@ provider:
 
 functions:
   hello:
-    handler: src/handler.hello
+    handler: handler.hello
     layers:
       - { Ref: SharedLambdaLayer }
     events:
@@ -20,7 +20,7 @@ functions:
 
 layers:
   shared:
-    path: src/layer
+    path: layer
     description: Shared utility library
     compatibleRuntimes:
       - nodejs18.x

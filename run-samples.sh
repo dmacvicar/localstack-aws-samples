@@ -37,6 +37,9 @@ LIST_MODE=${LIST_MODE:-false}
 # =============================================================================
 
 SCRIPT_SAMPLES=(
+    "samples/apigw-custom-domain/python|scripts/deploy.sh|scripts/test.sh|samples/apigw-custom-domain/python/scripts"
+    "samples/apigw-websockets/javascript|scripts/deploy.sh|scripts/test.sh|samples/apigw-websockets/javascript/scripts,samples/apigw-websockets/javascript/src"
+    "samples/ecs-ecr-app/python|scripts/deploy.sh|scripts/test.sh|samples/ecs-ecr-app/python/scripts,samples/ecs-ecr-app/python/templates"
     "samples/lambda-cloudfront/python|scripts/deploy.sh|scripts/test.sh|samples/lambda-cloudfront/python/scripts,samples/lambda-cloudfront/python/src"
     "samples/lambda-function-urls/python|scripts/deploy.sh|scripts/test.sh|samples/lambda-function-urls/python/scripts,samples/lambda-function-urls/python/src"
     "samples/lambda-layers/javascript|scripts/deploy.sh|scripts/test.sh|samples/lambda-layers/javascript/scripts,samples/lambda-layers/javascript/src"
@@ -47,12 +50,19 @@ SCRIPT_SAMPLES=(
 )
 
 TERRAFORM_SAMPLES=(
-    # Terraform samples can be added here
-    # "samples/lambda-cloudfront/python|terraform/deploy.sh|scripts/test.sh|samples/lambda-cloudfront/python/terraform,samples/lambda-cloudfront/python/src"
+    "samples/lambda-function-urls/python/terraform|deploy.sh|../scripts/test.sh|samples/lambda-function-urls/python/terraform,samples/lambda-function-urls/python/src"
+)
+
+CLOUDFORMATION_SAMPLES=(
+    "samples/lambda-function-urls/python/cloudformation|deploy.sh|../scripts/test.sh|samples/lambda-function-urls/python/cloudformation,samples/lambda-function-urls/python/src"
+)
+
+CDK_SAMPLES=(
+    "samples/lambda-function-urls/python/cdk|deploy.sh|../scripts/test.sh|samples/lambda-function-urls/python/cdk,samples/lambda-function-urls/python/src"
 )
 
 # Combine all samples
-ALL_SAMPLES=("${SCRIPT_SAMPLES[@]}" "${TERRAFORM_SAMPLES[@]}")
+ALL_SAMPLES=("${SCRIPT_SAMPLES[@]}" "${TERRAFORM_SAMPLES[@]}" "${CLOUDFORMATION_SAMPLES[@]}" "${CDK_SAMPLES[@]}")
 
 # =============================================================================
 # List Mode - Output JSON for CI Matrix
@@ -65,7 +75,19 @@ if [[ "$LIST_MODE" == "true" ]]; then
     shard=1
     for sample in "${ALL_SAMPLES[@]}"; do
         IFS='|' read -r path deploy test watch_folders <<< "$sample"
-        name=$(basename "$(dirname "$path")")/$(basename "$path")
+
+        # Generate name based on path structure
+        # For scripts: samples/foo/python -> foo/python
+        # For IaC: samples/foo/python/terraform -> foo/python/terraform
+        if [[ "$path" =~ samples/([^/]+)/([^/]+)$ ]]; then
+            # Standard sample: samples/{name}/{lang}
+            name="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+        elif [[ "$path" =~ samples/([^/]+)/([^/]+)/([^/]+)$ ]]; then
+            # IaC sample: samples/{name}/{lang}/{method}
+            name="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
+        else
+            name=$(basename "$(dirname "$path")")/$(basename "$path")
+        fi
 
         if [[ "$first" == "true" ]]; then
             first=false

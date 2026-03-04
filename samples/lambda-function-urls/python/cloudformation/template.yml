@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda Function URLs Sample
+
+Parameters:
+  FunctionName:
+    Type: String
+    Default: lambda-function-url-cfn
+    Description: Name of the Lambda function
+
+Resources:
+  # IAM Role for Lambda
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${FunctionName}-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda Function
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      Runtime: python3.12
+      Handler: handler.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          import json
+
+          def handler(event, context):
+              """Handle HTTP requests via Lambda Function URL."""
+              http_method = event.get("requestContext", {}).get("http", {}).get("method", "UNKNOWN")
+              path = event.get("requestContext", {}).get("http", {}).get("path", "/")
+              query_params = event.get("queryStringParameters") or {}
+              headers = event.get("headers") or {}
+
+              body = event.get("body")
+              if body:
+                  try:
+                      body = json.loads(body)
+                  except (json.JSONDecodeError, TypeError):
+                      pass
+
+              response_body = {
+                  "message": "Hello from Lambda Function URL!",
+                  "request": {
+                      "method": http_method,
+                      "path": path,
+                      "queryParams": query_params,
+                      "body": body
+                  },
+                  "functionName": context.function_name if context else "unknown"
+              }
+
+              return {
+                  "statusCode": 200,
+                  "headers": {"Content-Type": "application/json"},
+                  "body": json.dumps(response_body)
+              }
+
+  # Lambda Function URL
+  LambdaFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt LambdaFunction.Arn
+
+  # Permission for public access
+  LambdaFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+Outputs:
+  FunctionName:
+    Description: Lambda function name
+    Value: !Ref LambdaFunction
+
+  FunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt LambdaFunction.Arn
+
+  FunctionUrl:
+    Description: Lambda Function URL endpoint
+    Value: !GetAtt LambdaFunctionUrl.FunctionUrl
+
+  RoleArn:
+    Description: IAM role ARN
+    Value: !GetAtt LambdaRole.Arn

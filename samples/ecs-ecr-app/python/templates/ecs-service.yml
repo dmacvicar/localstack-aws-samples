@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Service with ECR Image
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: ECR image URI to deploy
+
+  ContainerPort:
+    Type: Number
+    Default: 80
+
+Resources:
+  # ECS Task Definition
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: ecs-ecr-sample-task
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: '256'
+      Memory: '512'
+      ExecutionRoleArn: !ImportValue EcsEcrSampleTaskExecutionRoleArn
+      ContainerDefinitions:
+        - Name: nginx
+          Image: !Ref ImageUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/ecs-ecr-sample
+              awslogs-region: us-east-1
+              awslogs-stream-prefix: ecs
+
+  # CloudWatch Log Group
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/ecs-ecr-sample
+      RetentionInDays: 1
+
+  # ECS Service
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: ecs-ecr-sample-service
+      Cluster: !ImportValue EcsEcrSampleClusterName
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !ImportValue EcsEcrSampleSubnetId
+          SecurityGroups:
+            - !ImportValue EcsEcrSampleSecurityGroupId
+
+Outputs:
+  ServiceName:
+    Value: !Ref ECSService
+
+  TaskDefinitionArn:
+    Value: !Ref TaskDefinition
