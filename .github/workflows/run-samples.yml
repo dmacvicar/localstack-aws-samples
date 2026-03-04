@@ -24,7 +24,7 @@ jobs:
       - name: Discover sample × IaC combinations
         id: discover
         run: |
-          # Build matrix of sample × IaC method combinations
+          # Build matrix of sample × IaC method combinations (Python only - pytest)
           matrix="["
           first=true
 
@@ -34,6 +34,9 @@ jobs:
             for lang_dir in "$sample_dir"*/; do
               [ -d "$lang_dir" ] || continue
               lang=$(basename "$lang_dir")
+
+              # Only include Python samples (pytest tests)
+              [ "$lang" = "python" ] || continue
 
               # Check for scripts deploy
               if [ -f "$lang_dir/scripts/deploy.sh" ]; then
@@ -98,12 +101,20 @@ jobs:
       - name: Install AWS CLI and LocalStack tools
         run: |
           uv tool install awscli
-          uv tool install awscli-local
+          uv tool install 'awscli-local==0.21'
           uv tool install terraform-local
 
       - name: Install CDK
         if: matrix.iac == 'cdk'
         run: npm install -g aws-cdk-local aws-cdk
+
+      - name: Install CDK Python dependencies
+        if: matrix.iac == 'cdk'
+        run: |
+          cd "samples/${{ matrix.sample }}/${{ matrix.language }}/cdk"
+          if [ -f requirements.txt ]; then
+            uv pip install -r requirements.txt
+          fi
 
       - name: Install test dependencies
         run: uv sync
