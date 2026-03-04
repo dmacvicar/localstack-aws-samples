@@ -43,10 +43,36 @@
   - [x] All tests pass: ACM cert, Route53 zone, Lambda, HTTP API, custom domain, API response
   - [x] Add to run-samples.sh
 
+## IaC Methods
+
+Adding Terraform, CloudFormation, and CDK deployment methods:
+
+- [x] `lambda-function-urls/python` - All 3 IaC methods (tested, passing)
+- [x] `stepfunctions-lambda/python` - All 3 IaC methods (tested, passing)
+- [x] `web-app-dynamodb/python` - All 3 IaC methods (tested, passing)
+- [x] `lambda-s3-http/python` - Terraform (tested, passing), CloudFormation/CDK (created)
+- [ ] `lambda-cloudfront/python` - IaC methods needed
+- [ ] `web-app-rds/python` - IaC methods needed
+- [ ] `apigw-custom-domain/python` - IaC methods needed
+- [ ] `ecs-ecr-app/python` - IaC methods needed
+
+## pytest Migration
+
+Migrating from bash tests to pytest for better assertions and retry handling:
+
+- [x] Create `tests/conftest.py` with shared fixtures
+- [x] Add sample discovery for test matrix (sample × IaC method)
+- [x] Add AWS client fixtures
+- [x] Add tenacity-based wait/retry utilities
+- [ ] Convert sample tests to pytest
+- [ ] Update run-samples.sh to use pytest
+
 ## To Do
 
-(All samples completed!)
+- [ ] Complete pytest migration for all samples
+- [ ] Add remaining IaC methods to samples
+- [ ] Port additional samples from original repo (Phase 2)
 
 ## CI Status
 
-10 samples completed. All pass via `run-samples.sh`.
+10 base samples + 4 Terraform + 3 CloudFormation + 3 CDK = 20 deployable targets.
