@@ -292,6 +292,107 @@ def invoke_lambda(aws_clients: AWSClients):
 
 
 # =============================================================================
+# Shared Test Fixtures (for tests that work across languages)
+# =============================================================================
+
+def discover_languages(sample_name: str) -> list[str]:
+    """Discover available languages for a sample."""
+    sample_parent = SAMPLES_DIR / sample_name
+    languages = []
+    for lang_dir in sample_parent.iterdir():
+        if lang_dir.is_dir() and not lang_dir.name.startswith((".", "_")):
+            # Check if it has any deploy scripts
+            has_scripts = (lang_dir / "scripts" / "deploy.sh").exists()
+            has_iac = any((lang_dir / iac / "deploy.sh").exists()
+                         for iac in ["terraform", "cloudformation", "cdk"])
+            if has_scripts or has_iac:
+                languages.append(lang_dir.name)
+    return sorted(languages)
+
+
+def discover_iac_methods(sample_name: str, language: str) -> list[str]:
+    """Discover available IaC methods for a sample."""
+    sample_dir = get_sample_dir(sample_name, language)
+    methods = []
+    if (sample_dir / "scripts" / "deploy.sh").exists():
+        methods.append("scripts")
+    for iac in ["terraform", "cloudformation", "cdk"]:
+        if (sample_dir / iac / "deploy.sh").exists():
+            methods.append(iac)
+    return methods
+
+
+def discover_all_variants(sample_name: str) -> list[tuple[str, str]]:
+    """Discover all (language, iac_method) combinations for a sample."""
+    variants = []
+    for lang in discover_languages(sample_name):
+        for iac in discover_iac_methods(sample_name, lang):
+            variants.append((lang, iac))
+    return variants
+
+
+def pytest_generate_tests(metafunc):
+    """Dynamically parameterize shared tests by language and IaC method.
+
+    For shared tests (in samples/<sample>/test_*.py) that use the
+    `deployed_env` fixture, this discovers all language × IaC combinations
+    and parameterizes accordingly.
+
+    Use -k to filter: pytest samples/my-sample/ -k "javascript and scripts"
+    """
+    if "deployed_env" in metafunc.fixturenames:
+        # Check if this is a shared test (in sample parent dir, not language dir)
+        test_path = Path(metafunc.module.__file__)
+        sample_dir = test_path.parent
+
+        # If test is directly under samples/<sample>/, it's a shared test
+        if sample_dir.parent == SAMPLES_DIR:
+            sample_name = sample_dir.name
+            variants = discover_all_variants(sample_name)
+
+            if variants:
+                # Parameterize with language-iac format for -k filtering
+                ids = [f"{lang}-{iac}" for lang, iac in variants]
+                metafunc.parametrize(
+                    "deployed_env",
+                    variants,
+                    ids=ids,
+                    indirect=True,
+                    scope="module"
+                )
+
+
+@pytest.fixture(scope="module")
+def deployed_env(request, wait_for: WaitFor) -> dict:
+    """Deploy the sample and return environment variables.
+
+    For shared tests, this receives (language, iac_method) from parametrize.
+    For language-specific tests, they define their own fixture.
+    """
+    # Get parameters - either from parametrize or skip
+    if not hasattr(request, "param"):
+        pytest.skip("deployed_env requires parametrization (use shared test pattern)")
+
+    language, iac_method = request.param
+
+    # Determine sample name from test file location
+    test_path = Path(request.module.__file__)
+    sample_name = test_path.parent.name
+
+    script_path = get_deploy_script_path(sample_name, language, iac_method)
+    if not script_path.exists():
+        pytest.skip(f"Deploy script not found: {script_path}")
+
+    env = run_deploy(sample_name, language, iac_method)
+
+    # Wait for Lambda to be active if function name is in env
+    if "FUNCTION_NAME" in env:
+        wait_for.lambda_active(env["FUNCTION_NAME"])
+
+    return env
+
+
+# =============================================================================
 # LocalStack Health Check
 # =============================================================================
 

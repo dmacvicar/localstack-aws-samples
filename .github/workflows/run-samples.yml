@@ -156,23 +156,21 @@ jobs:
           AWS_SECRET_ACCESS_KEY: test
           AWS_DEFAULT_REGION: us-east-1
         run: |
-          sample_dir="samples/${{ matrix.sample }}/${{ matrix.language }}"
+          sample_dir="samples/${{ matrix.sample }}"
+          lang_dir="$sample_dir/${{ matrix.language }}"
 
-          if [ "${{ matrix.language }}" = "python" ]; then
-            # Python: use pytest
-            uv run pytest "$sample_dir/" -v --tb=short -k "${{ matrix.iac }}"
+          # Check for language-specific test first, then shared test
+          if ls "$lang_dir"/test_*.py 1>/dev/null 2>&1; then
+            test_path="$lang_dir/"
+            # Language-specific test: filter by IaC method only
+            uv run pytest "$test_path" -v --tb=short -k "${{ matrix.iac }}"
+          elif ls "$sample_dir"/test_*.py 1>/dev/null 2>&1; then
+            test_path="$sample_dir/"
+            # Shared test: filter by both language and IaC method
+            uv run pytest "$test_path" -v --tb=short -k "${{ matrix.language }} and ${{ matrix.iac }}"
           else
-            # JavaScript/other: use bash deploy + test scripts
-            if [ "${{ matrix.iac }}" = "scripts" ]; then
-              cd "$sample_dir/scripts"
-              bash deploy.sh
-              bash test.sh
-            else
-              cd "$sample_dir/${{ matrix.iac }}"
-              bash deploy.sh
-              cd ../scripts
-              bash test.sh
-            fi
+            echo "No test file found for ${{ matrix.sample }}/${{ matrix.language }}"
+            exit 1
           fi
 
       - name: Capture LocalStack logs
