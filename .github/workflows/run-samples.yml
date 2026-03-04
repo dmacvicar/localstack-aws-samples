@@ -24,7 +24,7 @@ jobs:
       - name: Discover sample × IaC combinations
         id: discover
         run: |
-          # Build matrix of sample × IaC method combinations (Python only - pytest)
+          # Build matrix of sample × IaC method combinations
           matrix="["
           first=true
 
@@ -34,9 +34,6 @@ jobs:
             for lang_dir in "$sample_dir"*/; do
               [ -d "$lang_dir" ] || continue
               lang=$(basename "$lang_dir")
-
-              # Only include Python samples (pytest tests)
-              [ "$lang" = "python" ] || continue
 
               # Check for scripts deploy
               if [ -f "$lang_dir/scripts/deploy.sh" ]; then
@@ -153,15 +150,30 @@ jobs:
           timeout 60 bash -c 'until curl -s http://localhost:4566/_localstack/health | jq -e ".services" > /dev/null 2>&1; do sleep 2; done'
           echo "LocalStack is ready!"
 
-      - name: Run pytest for ${{ matrix.sample }} (${{ matrix.iac }})
+      - name: Run tests for ${{ matrix.sample }} (${{ matrix.iac }})
         env:
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
           AWS_DEFAULT_REGION: us-east-1
         run: |
-          uv run pytest "samples/${{ matrix.sample }}/${{ matrix.language }}/" \
-            -v --tb=short \
-            -k "${{ matrix.iac }}"
+          sample_dir="samples/${{ matrix.sample }}/${{ matrix.language }}"
+
+          if [ "${{ matrix.language }}" = "python" ]; then
+            # Python: use pytest
+            uv run pytest "$sample_dir/" -v --tb=short -k "${{ matrix.iac }}"
+          else
+            # JavaScript/other: use bash deploy + test scripts
+            if [ "${{ matrix.iac }}" = "scripts" ]; then
+              cd "$sample_dir/scripts"
+              bash deploy.sh
+              bash test.sh
+            else
+              cd "$sample_dir/${{ matrix.iac }}"
+              bash deploy.sh
+              cd ../scripts
+              bash test.sh
+            fi
+          fi
 
       - name: Capture LocalStack logs
         if: failure()
