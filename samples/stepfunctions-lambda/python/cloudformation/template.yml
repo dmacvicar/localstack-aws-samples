@@ -1,0 +1,176 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Step Functions Lambda Sample - Parallel workflow with Lambda functions
+
+Parameters:
+  Prefix:
+    Type: String
+    Default: cfn
+
+Resources:
+  # Lambda execution role
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Prefix}-sfn-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+  # Step Functions execution role
+  SfnRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Prefix}-sfn-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaInvoke
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt AdamFunction.Arn
+                  - !GetAtt ColeFunction.Arn
+                  - !GetAtt CombineFunction.Arn
+
+  # Adam Lambda function
+  AdamFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-sfn-adam'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return event["input"]["adam"]
+
+  # Cole Lambda function
+  ColeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-sfn-cole'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return event["input"]["cole"]
+
+  # Combine Lambda function
+  CombineFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-sfn-combine'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              values = event["input"]
+              return "Together Adam and Cole say '{}'!!".format(' '.join(values))
+
+  # Step Functions state machine
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub '${Prefix}-parallel-workflow'
+      RoleArn: !GetAtt SfnRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "A parallel state machine that demonstrates Step Functions orchestrating multiple Lambda functions",
+          "StartAt": "Parallel State",
+          "States": {
+            "Parallel State": {
+              "Type": "Parallel",
+              "Next": "Combine",
+              "Branches": [
+                {
+                  "StartAt": "Adam",
+                  "States": {
+                    "Adam": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "OutputPath": "$.Payload",
+                      "Parameters": {
+                        "FunctionName": "${AdamFunction.Arn}",
+                        "Payload": {
+                          "input.$": "$"
+                        }
+                      },
+                      "End": true
+                    }
+                  }
+                },
+                {
+                  "StartAt": "Cole",
+                  "States": {
+                    "Cole": {
+                      "Type": "Task",
+                      "Resource": "arn:aws:states:::lambda:invoke",
+                      "OutputPath": "$.Payload",
+                      "Parameters": {
+                        "FunctionName": "${ColeFunction.Arn}",
+                        "Payload": {
+                          "input.$": "$"
+                        }
+                      },
+                      "End": true
+                    }
+                  }
+                }
+              ]
+            },
+            "Combine": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${CombineFunction.Arn}",
+                "Payload": {
+                  "input.$": "$"
+                }
+              },
+              "End": true
+            }
+          }
+        }
+
+Outputs:
+  AdamFunction:
+    Value: !Ref AdamFunction
+  AdamArn:
+    Value: !GetAtt AdamFunction.Arn
+  ColeFunction:
+    Value: !Ref ColeFunction
+  ColeArn:
+    Value: !GetAtt ColeFunction.Arn
+  CombineFunction:
+    Value: !Ref CombineFunction
+  CombineArn:
+    Value: !GetAtt CombineFunction.Arn
+  StateMachineName:
+    Value: !GetAtt StateMachine.Name
+  StateMachineArn:
+    Value: !Ref StateMachine

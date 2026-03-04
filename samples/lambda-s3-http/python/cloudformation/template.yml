@@ -1,0 +1,265 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda S3 HTTP Sample - Gaming Scoreboard
+
+Parameters:
+  Prefix:
+    Type: String
+    Default: cfn
+
+Resources:
+  # DynamoDB table
+  ScoresTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${Prefix}-game-scores'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: playerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: playerId
+          KeyType: HASH
+
+  # SQS queue
+  ValidationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${Prefix}-score-validation'
+
+  # S3 bucket
+  ReplaysBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Prefix}-replays'
+
+  # IAM role
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Prefix}-lambda-s3-http-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # IAM policy
+  LambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${Prefix}-lambda-s3-http-policy'
+      Roles:
+        - !Ref LambdaRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:Scan
+            Resource: !GetAtt ScoresTable.Arn
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+            Resource: !GetAtt ValidationQueue.Arn
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource: !Sub '${ReplaysBucket.Arn}/*'
+
+  # HTTP handler Lambda
+  HttpFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-http-handler'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ScoresTable
+          QUEUE_URL: !Ref ValidationQueue
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import os
+          import boto3
+          from datetime import datetime
+          from decimal import Decimal
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          ENDPOINT_URL = os.environ.get('LOCALSTACK_HOSTNAME')
+          if ENDPOINT_URL:
+              ENDPOINT_URL = f"http://{ENDPOINT_URL}:4566"
+          dynamodb = boto3.resource('dynamodb', endpoint_url=ENDPOINT_URL)
+          sqs = boto3.client('sqs', endpoint_url=ENDPOINT_URL)
+          TABLE_NAME = os.environ.get('TABLE_NAME')
+          QUEUE_URL = os.environ.get('QUEUE_URL', '')
+
+          class DecimalEncoder(json.JSONEncoder):
+              def default(self, obj):
+                  if isinstance(obj, Decimal):
+                      return float(obj)
+                  return super().default(obj)
+
+          def handler(event, context):
+              method = event.get('httpMethod', 'GET')
+              path = event.get('path', '/')
+              path_params = event.get('pathParameters') or {}
+              body = event.get('body')
+              if body and isinstance(body, str):
+                  try:
+                      body = json.loads(body)
+                  except:
+                      pass
+
+              if path == '/scores' and method == 'GET':
+                  return get_top_scores()
+              elif path == '/scores' and method == 'POST':
+                  return submit_score(body)
+              elif path.startswith('/scores/') and method == 'GET':
+                  player_id = path_params.get('playerId') or path.split('/')[-1]
+                  return get_player_scores(player_id)
+              return response(404, {'error': 'Not found'})
+
+          def get_top_scores():
+              table = dynamodb.Table(TABLE_NAME)
+              result = table.scan(Limit=10)
+              items = sorted(result.get('Items', []), key=lambda x: x.get('score', 0), reverse=True)
+              return response(200, {'scores': items[:10]})
+
+          def submit_score(body):
+              if not body:
+                  return response(400, {'error': 'Invalid request body'})
+              player_id = body.get('playerId')
+              score = body.get('score')
+              game = body.get('game', 'default')
+              if not player_id or score is None:
+                  return response(400, {'error': 'playerId and score are required'})
+              table = dynamodb.Table(TABLE_NAME)
+              item = {'playerId': player_id, 'score': Decimal(str(score)), 'game': game, 'timestamp': datetime.utcnow().isoformat()}
+              table.put_item(Item=item)
+              if QUEUE_URL:
+                  sqs.send_message(QueueUrl=QUEUE_URL, MessageBody=json.dumps(item, cls=DecimalEncoder))
+              return response(201, {'message': 'Score submitted', 'item': item})
+
+          def get_player_scores(player_id):
+              table = dynamodb.Table(TABLE_NAME)
+              result = table.query(KeyConditionExpression='playerId = :pid', ExpressionAttributeValues={':pid': player_id})
+              return response(200, {'playerId': player_id, 'scores': result.get('Items', [])})
+
+          def response(status_code, body):
+              return {'statusCode': status_code, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps(body, cls=DecimalEncoder)}
+
+  # S3 handler Lambda
+  S3Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-s3-handler'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ScoresTable
+      Code:
+        ZipFile: |
+          import json
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def handler(event, context):
+              logger.info('S3 event: %s', json.dumps(event))
+              for record in event.get('Records', []):
+                  bucket = record['s3']['bucket']['name']
+                  key = record['s3']['object']['key']
+                  logger.info('Processing: s3://%s/%s', bucket, key)
+              return {'statusCode': 200, 'body': 'OK'}
+
+  # SQS handler Lambda
+  SqsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Prefix}-sqs-handler'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ScoresTable
+      Code:
+        ZipFile: |
+          import json
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def handler(event, context):
+              logger.info('SQS event: %s', json.dumps(event))
+              for record in event.get('Records', []):
+                  body = json.loads(record['body'])
+                  logger.info('Validating score: %s', body)
+              return {'statusCode': 200, 'body': 'OK'}
+
+  # Function URL
+  HttpFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt HttpFunction.Arn
+
+  # S3 invoke permission
+  S3InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref S3Function
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt ReplaysBucket.Arn
+
+  # SQS event source mapping
+  SqsEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt ValidationQueue.Arn
+      FunctionName: !Ref SqsFunction
+      BatchSize: 10
+
+Outputs:
+  TableName:
+    Value: !Ref ScoresTable
+  BucketName:
+    Value: !Ref ReplaysBucket
+  QueueName:
+    Value: !GetAtt ValidationQueue.QueueName
+  QueueUrl:
+    Value: !Ref ValidationQueue
+  HttpFunction:
+    Value: !Ref HttpFunction
+  S3Function:
+    Value: !Ref S3Function
+  S3FunctionArn:
+    Value: !GetAtt S3Function.Arn
+  SqsFunction:
+    Value: !Ref SqsFunction

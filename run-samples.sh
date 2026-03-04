@@ -51,14 +51,21 @@ SCRIPT_SAMPLES=(
 
 TERRAFORM_SAMPLES=(
     "samples/lambda-function-urls/python/terraform|deploy.sh|../scripts/test.sh|samples/lambda-function-urls/python/terraform,samples/lambda-function-urls/python/src"
+    "samples/lambda-s3-http/python/terraform|deploy.sh|../scripts/test.sh|samples/lambda-s3-http/python/terraform,samples/lambda-s3-http/python/src"
+    "samples/stepfunctions-lambda/python/terraform|deploy.sh|../scripts/test.sh|samples/stepfunctions-lambda/python/terraform,samples/stepfunctions-lambda/python/src"
+    "samples/web-app-dynamodb/python/terraform|deploy.sh|../scripts/test.sh|samples/web-app-dynamodb/python/terraform,samples/web-app-dynamodb/python/src"
 )
 
 CLOUDFORMATION_SAMPLES=(
     "samples/lambda-function-urls/python/cloudformation|deploy.sh|../scripts/test.sh|samples/lambda-function-urls/python/cloudformation,samples/lambda-function-urls/python/src"
+    "samples/stepfunctions-lambda/python/cloudformation|deploy.sh|../scripts/test.sh|samples/stepfunctions-lambda/python/cloudformation,samples/stepfunctions-lambda/python/src"
+    "samples/web-app-dynamodb/python/cloudformation|deploy.sh|../scripts/test.sh|samples/web-app-dynamodb/python/cloudformation,samples/web-app-dynamodb/python/src"
 )
 
 CDK_SAMPLES=(
     "samples/lambda-function-urls/python/cdk|deploy.sh|../scripts/test.sh|samples/lambda-function-urls/python/cdk,samples/lambda-function-urls/python/src"
+    "samples/stepfunctions-lambda/python/cdk|deploy.sh|../scripts/test.sh|samples/stepfunctions-lambda/python/cdk,samples/stepfunctions-lambda/python/src"
+    "samples/web-app-dynamodb/python/cdk|deploy.sh|../scripts/test.sh|samples/web-app-dynamodb/python/cdk,samples/web-app-dynamodb/python/src"
 )
 
 # Combine all samples
