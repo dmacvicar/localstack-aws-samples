@@ -256,12 +256,21 @@ def run_deploy(sample_name: str, language: str, iac_method: str, timeout: int = 
     if not script_path.exists():
         raise FileNotFoundError(f"Deploy script not found: {script_path}")
 
+    # Pass AWS credentials to subprocess
+    env = os.environ.copy()
+    env.update({
+        "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
+        "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
+        "AWS_DEFAULT_REGION": AWS_REGION,
+    })
+
     result = subprocess.run(
         ["bash", str(script_path)],
         cwd=script_path.parent,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
 
     if result.returncode != 0:

@@ -53,7 +53,7 @@ class LambdaLayersStack(Stack):
             handler="handler.hello",
             code=lambda_.Code.from_asset(
                 str(project_dir),
-                exclude=["node_modules", "scripts", "layer", ".serverless", "*.pyc", "__pycache__", "terraform", "cloudformation", "cdk"],
+                exclude=["node_modules", "scripts", "layer", ".serverless", "*.pyc", "__pycache__", "terraform", "cloudformation", "cdk", "test_*.py"],
             ),
             timeout=Duration.seconds(30),
             memory_size=128,
