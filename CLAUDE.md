@@ -60,8 +60,8 @@ samples/<sample-name>/<language>/
 | web-app-rds | python | scripts, terraform, cloudformation, cdk | 28 |
 | apigw-custom-domain | python | scripts, terraform, cloudformation, cdk | 28 |
 | ecs-ecr-app | python | scripts, terraform, cloudformation, cdk | 24 |
-| apigw-websockets | javascript | scripts | 5 |
-| lambda-layers | javascript | scripts | 5 |
+| apigw-websockets | javascript | scripts, terraform, cloudformation, cdk | 5 |
+| lambda-layers | javascript | scripts, terraform, cloudformation, cdk | 5 |
 | lambda-container-image | python | scripts, terraform, cloudformation, cdk | 6 |
 
 ## What "Porting a Sample" Means
@@ -93,6 +93,8 @@ Each sample must include:
 See `openspec/changes/port-high-priority-samples/tasks.md` for current state.
 
 ### Recently Completed
+- `lambda-layers/javascript` - Full port with all 4 IaC methods + teardown scripts
+- `apigw-websockets/javascript` - Full port with all 4 IaC methods + teardown scripts
 - `ecs-ecr-app/python` - Full port with all 4 IaC methods + teardown scripts
 - `apigw-custom-domain/python` - Full port with all 4 IaC methods + teardown scripts
 - `web-app-rds/python` - Full port with all 4 IaC methods + teardown scripts
@@ -100,5 +102,5 @@ See `openspec/changes/port-high-priority-samples/tasks.md` for current state.
 - `lambda-container-image/python` - Full port with all 4 IaC methods + teardown scripts
 
 ### Next Steps
-- Add IaC methods to remaining samples (apigw-websockets, lambda-layers)
+- All current samples now have all 4 IaC methods
 - Port more samples from original localstack-pro-samples repo
