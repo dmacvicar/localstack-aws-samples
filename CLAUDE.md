@@ -56,8 +56,8 @@ samples/<sample-name>/<language>/
 | stepfunctions-lambda | python | scripts, terraform, cloudformation, cdk | 10 |
 | web-app-dynamodb | python | scripts, terraform, cloudformation, cdk | 8 |
 | lambda-s3-http | python | scripts, terraform, cloudformation, cdk | 11 |
-| lambda-cloudfront | python | scripts | 4 |
-| web-app-rds | python | scripts | 7 |
+| lambda-cloudfront | python | scripts, terraform, cloudformation, cdk | 16 |
+| web-app-rds | python | scripts, terraform, cloudformation, cdk | 28 |
 | apigw-custom-domain | python | scripts | 7 |
 | ecs-ecr-app | python | scripts | 6 |
 | apigw-websockets | javascript | scripts | 5 |
@@ -93,8 +93,10 @@ Each sample must include:
 See `openspec/changes/port-high-priority-samples/tasks.md` for current state.
 
 ### Recently Completed
+- `web-app-rds/python` - Full port with all 4 IaC methods + teardown scripts
+- `lambda-cloudfront/python` - Full port with all 4 IaC methods + teardown scripts
 - `lambda-container-image/python` - Full port with all 4 IaC methods + teardown scripts
 
 ### Next Steps
-- Add IaC methods to remaining samples (lambda-cloudfront, web-app-rds, apigw-custom-domain, ecs-ecr-app)
+- Add IaC methods to remaining samples (apigw-custom-domain, ecs-ecr-app)
 - Port more samples from original localstack-pro-samples repo

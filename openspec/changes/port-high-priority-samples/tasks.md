@@ -32,6 +32,19 @@ These have scripts/ but need other IaC methods:
   - [x] pytest tests (6 tests × 4 IaC methods)
   - [x] All tests pass locally
 
+- [x] `lambda-cloudfront/python`
+  - [x] All 4 IaC methods: scripts, terraform, cloudformation, cdk
+  - [x] Each has deploy.sh and teardown.sh
+  - [x] pytest tests (4 tests × 4 IaC methods = 16 tests, 12 pass, 4 skipped for CloudFront distribution)
+  - [x] All tests pass locally
+
+- [x] `web-app-rds/python`
+  - [x] All 4 IaC methods: scripts, terraform, cloudformation, cdk
+  - [x] Each has deploy.sh and teardown.sh
+  - [x] All IaC methods create VPC + subnets for RDS consistency
+  - [x] pytest tests (7 tests × 4 IaC methods = 28 tests)
+  - [x] All tests pass locally
+
 ## pytest Infrastructure
 
 - [x] Shared fixtures in `samples/conftest.py`
@@ -51,8 +64,8 @@ These have scripts/ but need other IaC methods:
 ## To Do (Priority Order)
 
 1. Add IaC methods + teardown scripts to existing samples:
-   - [ ] `lambda-cloudfront/python`
-   - [ ] `web-app-rds/python`
+   - [x] `lambda-cloudfront/python`
+   - [x] `web-app-rds/python`
    - [ ] `apigw-custom-domain/python`
    - [ ] `ecs-ecr-app/python`
 

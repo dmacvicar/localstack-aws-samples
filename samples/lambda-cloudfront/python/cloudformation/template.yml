@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda CloudFront Sample
+
+Parameters:
+  FunctionName:
+    Type: String
+    Default: lambda-cloudfront-cfn
+    Description: Name of the Lambda function
+
+Resources:
+  # IAM Role for Lambda
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${FunctionName}-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda Function
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      Runtime: python3.12
+      Handler: handler.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          from datetime import datetime
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def handler(event, context):
+              logger.info("Received event: %s", json.dumps(event))
+              path = "/"
+              method = "GET"
+
+              if "httpMethod" in event:
+                  path = event.get("path", "/")
+                  method = event.get("httpMethod", "GET")
+              elif "Records" in event:
+                  cf_request = event["Records"][0]["cf"]["request"]
+                  path = cf_request.get("uri", "/")
+                  method = cf_request.get("method", "GET")
+
+              response_body = {
+                  "message": "Hello from Lambda behind CloudFront!",
+                  "path": path,
+                  "method": method,
+                  "timestamp": datetime.utcnow().isoformat(),
+                  "origin": "lambda-cloudfront-sample"
+              }
+
+              return {
+                  "statusCode": 200,
+                  "headers": {
+                      "Content-Type": "application/json",
+                      "Cache-Control": "max-age=60",
+                      "X-Custom-Header": "LocalStack-Sample"
+                  },
+                  "body": json.dumps(response_body)
+              }
+
+  # Lambda Function URL
+  LambdaFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt LambdaFunction.Arn
+
+  # Permission for public access
+  LambdaFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+Outputs:
+  FunctionName:
+    Description: Lambda function name
+    Value: !Ref LambdaFunction
+
+  FunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt LambdaFunction.Arn
+
+  FunctionUrl:
+    Description: Lambda Function URL endpoint
+    Value: !GetAtt LambdaFunctionUrl.FunctionUrl
+
+  RoleArn:
+    Description: IAM role ARN
+    Value: !GetAtt LambdaRole.Arn
