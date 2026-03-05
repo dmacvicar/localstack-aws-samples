@@ -58,7 +58,7 @@ samples/<sample-name>/<language>/
 | lambda-s3-http | python | scripts, terraform, cloudformation, cdk | 11 |
 | lambda-cloudfront | python | scripts, terraform, cloudformation, cdk | 16 |
 | web-app-rds | python | scripts, terraform, cloudformation, cdk | 28 |
-| apigw-custom-domain | python | scripts | 7 |
+| apigw-custom-domain | python | scripts, terraform, cloudformation, cdk | 28 |
 | ecs-ecr-app | python | scripts | 6 |
 | apigw-websockets | javascript | scripts | 5 |
 | lambda-layers | javascript | scripts | 5 |
@@ -93,10 +93,11 @@ Each sample must include:
 See `openspec/changes/port-high-priority-samples/tasks.md` for current state.
 
 ### Recently Completed
+- `apigw-custom-domain/python` - Full port with all 4 IaC methods + teardown scripts
 - `web-app-rds/python` - Full port with all 4 IaC methods + teardown scripts
 - `lambda-cloudfront/python` - Full port with all 4 IaC methods + teardown scripts
 - `lambda-container-image/python` - Full port with all 4 IaC methods + teardown scripts
 
 ### Next Steps
-- Add IaC methods to remaining samples (apigw-custom-domain, ecs-ecr-app)
+- Add IaC methods to remaining samples (ecs-ecr-app)
 - Port more samples from original localstack-pro-samples repo

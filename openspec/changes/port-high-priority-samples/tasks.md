@@ -45,6 +45,13 @@ These have scripts/ but need other IaC methods:
   - [x] pytest tests (7 tests × 4 IaC methods = 28 tests)
   - [x] All tests pass locally
 
+- [x] `apigw-custom-domain/python`
+  - [x] All 4 IaC methods: scripts, terraform, cloudformation, cdk
+  - [x] Each has deploy.sh and teardown.sh
+  - [x] Uses ACM, Route53, API Gateway v2 HTTP API, Lambda, custom domain
+  - [x] pytest tests (7 tests × 4 IaC methods = 28 tests)
+  - [x] All tests pass locally
+
 ## pytest Infrastructure
 
 - [x] Shared fixtures in `samples/conftest.py`
@@ -66,7 +73,7 @@ These have scripts/ but need other IaC methods:
 1. Add IaC methods + teardown scripts to existing samples:
    - [x] `lambda-cloudfront/python`
    - [x] `web-app-rds/python`
-   - [ ] `apigw-custom-domain/python`
+   - [x] `apigw-custom-domain/python`
    - [ ] `ecs-ecr-app/python`
 
 2. Port more samples from original repo:

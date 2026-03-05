@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: API Gateway Custom Domain Sample
+
+Parameters:
+  FunctionName:
+    Type: String
+    Default: apigw-custom-domain-cfn
+    Description: Name of the Lambda function
+  DomainName:
+    Type: String
+    Default: api.example.com
+    Description: Custom domain name
+  HostedZoneName:
+    Type: String
+    Default: example.com
+    Description: Route53 hosted zone name
+  CertificateArn:
+    Type: String
+    Description: ACM certificate ARN (provided by deploy script)
+
+Resources:
+  # Route53 Hosted Zone
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref HostedZoneName
+
+  # IAM Role for Lambda
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${FunctionName}-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda Function
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      Runtime: python3.11
+      Handler: handler.hello
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          import json
+
+          def hello(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": json.dumps({"message": "Hello from custom domain!"})
+              }
+
+          def goodbye(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": json.dumps({"message": "Goodbye from custom domain!"})
+              }
+
+  # API Gateway HTTP API
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: apigw-custom-domain-cfn
+      ProtocolType: HTTP
+
+  # Lambda Integration
+  LambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt LambdaFunction.Arn
+      PayloadFormatVersion: '2.0'
+
+  # Route for /hello
+  HelloRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /hello
+      Target: !Sub 'integrations/${LambdaIntegration}'
+
+  # Route for /goodbye
+  GoodbyeRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /goodbye
+      Target: !Sub 'integrations/${LambdaIntegration}'
+
+  # Default Stage
+  DefaultStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+
+  # Lambda Permission for API Gateway
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*'
+
+  # Custom Domain
+  CustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName: !Ref DomainName
+      DomainNameConfigurations:
+        - CertificateArn: !Ref CertificateArn
+          EndpointType: REGIONAL
+          SecurityPolicy: TLS_1_2
+
+  # API Mapping
+  ApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DependsOn: DefaultStage
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref CustomDomain
+      Stage: $default
+
+  # Route53 Record
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref DomainName
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt CustomDomain.RegionalDomainName
+
+Outputs:
+  FunctionName:
+    Description: Lambda function name
+    Value: !Ref LambdaFunction
+
+  ApiId:
+    Description: API Gateway API ID
+    Value: !Ref HttpApi
+
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !GetAtt HttpApi.ApiEndpoint
+
+  DomainName:
+    Description: Custom domain name
+    Value: !Ref DomainName
+
+  CertArn:
+    Description: ACM certificate ARN
+    Value: !Ref CertificateArn
+
+  HostedZoneId:
+    Description: Route53 hosted zone ID
+    Value: !Ref HostedZone
