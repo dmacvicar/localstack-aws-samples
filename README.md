@@ -29,12 +29,25 @@ This repository contains sample applications demonstrating LocalStack Pro featur
 
 ## Samples
 
-| Sample | Description | Services | Azure Equivalent |
-|--------|-------------|----------|------------------|
-| [lambda-cloudfront](samples/lambda-cloudfront/) | Lambda function fronted by CloudFront CDN | Lambda, CloudFront | function-app-front-door |
-| [lambda-s3-http](samples/lambda-s3-http/) | Gaming scoreboard with HTTP, S3, and SQS triggers | Lambda, S3, SQS, DynamoDB | function-app-storage-http |
-| [web-app-dynamodb](samples/web-app-dynamodb/) | Web application with DynamoDB NoSQL backend | Lambda, DynamoDB | web-app-cosmosdb-nosql-api |
-| [web-app-rds](samples/web-app-rds/) | Web application with RDS PostgreSQL backend | Lambda, RDS | web-app-sql-database |
+| Sample | Language | IaC Methods | Tests | Notes |
+|--------|----------|-------------|-------|-------|
+| [lambda-function-urls](samples/lambda-function-urls/) | python | scripts, terraform, cloudformation, cdk | 7 | |
+| [stepfunctions-lambda](samples/stepfunctions-lambda/) | python | scripts, terraform, cloudformation, cdk | 10 | |
+| [web-app-dynamodb](samples/web-app-dynamodb/) | python | scripts, terraform, cloudformation, cdk | 8 | |
+| [lambda-s3-http](samples/lambda-s3-http/) | python | scripts, terraform, cloudformation, cdk | 11 | |
+| [lambda-cloudfront](samples/lambda-cloudfront/) | python | scripts, terraform, cloudformation, cdk | 16 | |
+| [web-app-rds](samples/web-app-rds/) | python | scripts, terraform, cloudformation, cdk | 28 | |
+| [apigw-custom-domain](samples/apigw-custom-domain/) | python | scripts, terraform, cloudformation, cdk | 28 | |
+| [ecs-ecr-app](samples/ecs-ecr-app/) | python | scripts, terraform, cloudformation, cdk | 24 | |
+| [lambda-container-image](samples/lambda-container-image/) | python | scripts, terraform, cloudformation, cdk | 6 | |
+| [apigw-websockets](samples/apigw-websockets/) | javascript | scripts, terraform, cloudformation, cdk | 5 | |
+| [lambda-layers](samples/lambda-layers/) | javascript | scripts, terraform, cloudformation, cdk | 5 | |
+| [lambda-event-filtering](samples/lambda-event-filtering/) | javascript | scripts, terraform, cloudformation, cdk | 32 | |
+| [lambda-xray](samples/lambda-xray/) | python | scripts, terraform, cloudformation, cdk | 24 | |
+| [codecommit-git-repo](samples/codecommit-git-repo/) | python | scripts, terraform | 14 | CloudFormation/CDK unsupported |
+| [iot-basics](samples/iot-basics/) | python | scripts, terraform, cloudformation, cdk | 8 | 1 test skipped (MQTT endpoint) |
+| [athena-s3-queries](samples/athena-s3-queries/) | python | scripts, terraform, cloudformation, cdk | - | Requires Hadoop download |
+| [mq-broker](samples/mq-broker/) | python | scripts, terraform, cloudformation, cdk | - | Requires JDK/ActiveMQ download |
 
 ## Sample Structure
 
