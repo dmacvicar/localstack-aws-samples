@@ -103,7 +103,7 @@ These have scripts/ but need other IaC methods:
 - [ ] `ec2-docker-instances` - EC2 with Docker
 - [ ] `elb-load-balancing` - ELB (uses Serverless Framework)
 - [ ] `glacier-s3-select` - Glacier + S3 Select
-- [ ] `neptune-graph-db` - Neptune graph database
+- [~] `neptune-graph-db/python` - scripts only, NEEDS TESTING (requires Java/TinkerGraph download)
 - [x] `rds-failover-test/python` - scripts only (7 tests pass, Terraform/CloudFormation/CDK unsupported)
 - [ ] `route53-dns-failover` - Route53 DNS failover
 - [ ] `lambda-php-bref-cdk-app` - PHP Lambda with Bref
