@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Athena S3 Queries Sample
+
+Parameters:
+  BucketSuffix:
+    Type: String
+    Description: Unique suffix for bucket name
+
+Resources:
+  AthenaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'athena-test-${BucketSuffix}'
+
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: test_db
+        LocationUri: !Sub 's3://${AthenaBucket}/test_db/'
+
+  GlueTable:
+    Type: AWS::Glue::Table
+    DependsOn: GlueDatabase
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: test_db
+      TableInput:
+        Name: test_table1
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          skip.header.line.count: '1'
+          EXTERNAL: 'TRUE'
+        StorageDescriptor:
+          Location: !Sub 's3://${AthenaBucket}/data/'
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+            Parameters:
+              field.delim: ','
+          Columns:
+            - Name: id
+              Type: int
+            - Name: first_name
+              Type: string
+            - Name: last_name
+              Type: string
+            - Name: email
+              Type: string
+            - Name: gender
+              Type: string
+            - Name: is_active
+              Type: boolean
+            - Name: joined_date
+              Type: string
+
+  AthenaWorkgroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: !Sub 'athena-workgroup-${BucketSuffix}'
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: !Sub 's3://${AthenaBucket}/results/'
+
+Outputs:
+  BucketName:
+    Value: !Ref AthenaBucket
+    Description: S3 bucket name
+
+  DatabaseName:
+    Value: test_db
+    Description: Glue database name
+
+  TableName:
+    Value: test_table1
+    Description: Glue table name
+
+  WorkgroupName:
+    Value: !Ref AthenaWorkgroup
+    Description: Athena workgroup name
+
+  S3Output:
+    Value: !Sub 's3://${AthenaBucket}/results'
+    Description: S3 output location for query results

@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IoT Basics Sample
+
+Parameters:
+  Suffix:
+    Type: String
+    Description: Unique suffix for resource names
+
+Resources:
+  IoTThing:
+    Type: AWS::IoT::Thing
+    Properties:
+      ThingName: !Sub 'iot-thing-${Suffix}'
+      AttributePayload:
+        Attributes:
+          env: test
+          version: '1.0'
+
+  IoTPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyName: !Sub 'iot-policy-${Suffix}'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iot:Connect
+              - iot:Publish
+              - iot:Subscribe
+              - iot:Receive
+            Resource: '*'
+
+  IoTTopicRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: !Sub 'rule_${Suffix}'
+      TopicRulePayload:
+        RuleDisabled: false
+        Sql: "SELECT * FROM 'iot/sensor/+'"
+        Actions: []
+
+Outputs:
+  ThingName:
+    Value: !Ref IoTThing
+    Description: IoT Thing Name
+
+  ThingArn:
+    Value: !GetAtt IoTThing.Arn
+    Description: IoT Thing ARN
+
+  PolicyName:
+    Value: !Ref IoTPolicy
+    Description: IoT Policy Name
+
+  PolicyArn:
+    Value: !GetAtt IoTPolicy.Arn
+    Description: IoT Policy ARN
+
+  RuleName:
+    Value: !Ref IoTTopicRule
+    Description: IoT Topic Rule Name

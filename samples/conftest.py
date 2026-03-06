@@ -127,6 +127,22 @@ class AWSClients:
     def cloudfront_client(self):
         return self._client("cloudfront")
 
+    @property
+    def athena_client(self):
+        return self._client("athena")
+
+    @property
+    def glue_client(self):
+        return self._client("glue")
+
+    @property
+    def mq_client(self):
+        return self._client("mq")
+
+    @property
+    def iot_client(self):
+        return self._client("iot")
+
 
 @pytest.fixture(scope="session")
 def aws_clients() -> AWSClients:
@@ -194,6 +210,17 @@ class WaitFor:
         svc = response["services"][0]
         if svc["runningCount"] < 1:
             raise Exception(f"Service has {svc['runningCount']} running tasks")
+        return response
+
+    @retry(wait=wait_fixed(3), stop=stop_after_delay(180), reraise=True)
+    def athena_query_complete(self, query_execution_id: str) -> dict:
+        """Wait for Athena query to complete."""
+        response = self.clients.athena_client.get_query_execution(
+            QueryExecutionId=query_execution_id
+        )
+        state = response["QueryExecution"]["Status"]["State"]
+        if state in ("QUEUED", "RUNNING"):
+            raise Exception(f"Query {query_execution_id} state is {state}")
         return response
 
 

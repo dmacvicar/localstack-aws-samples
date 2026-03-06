@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda Event Filtering with DynamoDB Streams and SQS
+
+Resources:
+  # DynamoDB Table with Streams
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+  # SQS Queue
+  SQSQueue:
+    Type: AWS::SQS::Queue
+
+  # IAM Role for Lambda
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+
+  # DynamoDB Stream Lambda Function
+  DynamoDBProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs18.x
+      Handler: handler.processDynamoDBStream
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          exports.processDynamoDBStream = async (event) => {
+              console.log('DynamoDB Stream Event:', JSON.stringify(event, null, 2));
+              for (const record of event.Records) {
+                  console.log('Event Name:', record.eventName);
+                  console.log('New Image:', JSON.stringify(record.dynamodb.NewImage, null, 2));
+              }
+              return { statusCode: 200, body: JSON.stringify({ message: 'DynamoDB stream processed', recordCount: event.Records.length }) };
+          };
+
+  # SQS Lambda Function
+  SQSProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs18.x
+      Handler: handler.processSQS
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          exports.processSQS = async (event) => {
+              console.log('SQS Event:', JSON.stringify(event, null, 2));
+              for (const record of event.Records) {
+                  const body = JSON.parse(record.body);
+                  console.log('Message Body:', body);
+                  console.log('Data value:', body.data);
+              }
+              return { statusCode: 200, body: JSON.stringify({ message: 'SQS message processed', recordCount: event.Records.length }) };
+          };
+
+  # DynamoDB Stream Event Source Mapping with INSERT filter
+  DynamoDBEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      FunctionName: !Ref DynamoDBProcessorFunction
+      EventSourceArn: !GetAtt DynamoDBTable.StreamArn
+      StartingPosition: TRIM_HORIZON
+      BatchSize: 1
+      FilterCriteria:
+        Filters:
+          - Pattern: '{"eventName": ["INSERT"]}'
+
+  # SQS Event Source Mapping with data:A filter
+  SQSEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      FunctionName: !Ref SQSProcessorFunction
+      EventSourceArn: !GetAtt SQSQueue.Arn
+      BatchSize: 1
+      FilterCriteria:
+        Filters:
+          - Pattern: '{"body": {"data": ["A"]}}'
+
+Outputs:
+  TableName:
+    Value: !Ref DynamoDBTable
+
+  StreamArn:
+    Value: !GetAtt DynamoDBTable.StreamArn
+
+  QueueName:
+    Value: !GetAtt SQSQueue.QueueName
+
+  QueueUrl:
+    Value: !Ref SQSQueue
+
+  QueueArn:
+    Value: !GetAtt SQSQueue.Arn
+
+  DynamoDBFunctionName:
+    Value: !Ref DynamoDBProcessorFunction
+
+  SQSFunctionName:
+    Value: !Ref SQSProcessorFunction

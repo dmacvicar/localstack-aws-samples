@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: MQ Broker Sample
+
+Parameters:
+  BrokerSuffix:
+    Type: String
+    Description: Unique suffix for broker name
+
+Resources:
+  MQBroker:
+    Type: AWS::AmazonMQ::Broker
+    Properties:
+      BrokerName: !Sub 'mq-broker-${BrokerSuffix}'
+      DeploymentMode: SINGLE_INSTANCE
+      EngineType: ActiveMQ
+      EngineVersion: '5.18'
+      HostInstanceType: mq.m5.large
+      PubliclyAccessible: true
+      AutoMinorVersionUpgrade: true
+      Users:
+        - Username: admin
+          Password: Admin123456!
+          ConsoleAccess: true
+          Groups:
+            - admin
+
+Outputs:
+  BrokerId:
+    Value: !Ref MQBroker
+    Description: MQ Broker ID
+
+  BrokerName:
+    Value: !Sub 'mq-broker-${BrokerSuffix}'
+    Description: MQ Broker Name
+
+  BrokerArn:
+    Value: !GetAtt MQBroker.Arn
+    Description: MQ Broker ARN
+
+  Username:
+    Value: admin
+    Description: Broker username
+
+  Password:
+    Value: Admin123456!
+    Description: Broker password

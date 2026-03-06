@@ -74,15 +74,60 @@ These have scripts/ but need other IaC methods:
    - [x] `lambda-cloudfront/python`
    - [x] `web-app-rds/python`
    - [x] `apigw-custom-domain/python`
-   - [ ] `ecs-ecr-app/python`
+   - [x] `ecs-ecr-app/python`
 
 2. Port more samples from original repo:
-   - [ ] `cognito-jwt` (requires SMTP - may skip)
-   - [ ] `lambda-event-filtering`
-   - [ ] `appsync-graphql-api`
-   - [ ] `athena-s3-queries`
-   - [ ] `glue-etl-jobs`
+   - [x] `lambda-event-filtering/javascript` - All 4 IaC methods
+   - [x] `iot-basics/python` - All 4 IaC methods (8 tests pass, 1 skipped - MQTT endpoint)
+   - [~] `athena-s3-queries/python` - All 4 IaC methods created, NEEDS TESTING (requires Hadoop download)
+   - [~] `mq-broker/python` - All 4 IaC methods created, NEEDS TESTING (requires JDK/ActiveMQ download)
+
+## Remaining Samples to Port (from localstack-pro-samples-original)
+
+### Simple (no heavy dependencies)
+- [ ] `qldb-ledger-queries` - QLDB queries (Python script)
+- [ ] `lambda-xray` - X-Ray tracing
+- [ ] `cloudwatch-metrics-aws` - CloudWatch metrics
+- [ ] `iam-policy-enforcement` - IAM policy testing
+- [ ] `codecommit-git-repo` - CodeCommit repository
+- [ ] `lambda-hot-reloading` - Hot reload demo
+- [ ] `mediastore-uploads` - MediaStore uploads
+- [ ] `rds-db-queries` - RDS queries (similar to web-app-rds)
+
+### Medium complexity
+- [ ] `cognito-jwt` - Cognito JWT (requires SMTP - may skip)
+- [ ] `chalice-rest-api` - Chalice framework REST API
+- [ ] `ec2-docker-instances` - EC2 with Docker
+- [ ] `elb-load-balancing` - ELB (uses Serverless Framework)
+- [ ] `glacier-s3-select` - Glacier + S3 Select
+- [ ] `neptune-graph-db` - Neptune graph database
+- [ ] `rds-failover-test` - RDS failover testing
+- [ ] `route53-dns-failover` - Route53 DNS failover
+- [ ] `transfer-ftp-s3` - Transfer Family FTP to S3
+- [ ] `lambda-php-bref-cdk-app` - PHP Lambda with Bref
+
+### Complex (heavy dependencies or multiple services)
+- [ ] `appsync-graphql-api` - AppSync + DynamoDB + RDS + WebSockets
+- [ ] `glue-etl-jobs` - Glue ETL (needs Hadoop/Spark)
+- [ ] `glue-msk-schema-registry` - Glue + MSK
+- [ ] `glue-redshift-crawler` - Glue + Redshift
+- [ ] `emr-serverless-sample` - EMR Serverless
+- [ ] `emr-serverless-spark` - EMR Spark
+- [ ] `emr-serverless-python-dependencies` - EMR Python
+- [ ] `sagemaker-inference` - SageMaker inference
+- [ ] `reproducible-ml` - ML reproducibility
+
+### Debugging/tooling samples (different purpose)
+- [ ] `lambda-debugging-sam-java` - SAM debugging (Java)
+- [ ] `lambda-debugging-sam-javascript` - SAM debugging (JS)
+- [ ] `lambda-debugging-sam-python` - SAM debugging (Python)
+- [ ] `lambda-debugging-sam-typescript` - SAM debugging (TS)
+- [ ] `cdk-for-terraform` - CDKTF example
+- [ ] `cdk-resources` - CDK resources demo
+- [ ] `terraform-resources` - Terraform resources demo
+- [ ] `testcontainers-java-sample` - Testcontainers Java
+- [ ] `multi-account-multi-region-s3-access` - Multi-account S3
 
 ## CI Status
 
-11 samples, ~180 pytest tests across all IaC method combinations.
+15 samples ported, ~200 pytest tests across all IaC method combinations.

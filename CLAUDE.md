@@ -63,6 +63,7 @@ samples/<sample-name>/<language>/
 | apigw-websockets | javascript | scripts, terraform, cloudformation, cdk | 5 |
 | lambda-layers | javascript | scripts, terraform, cloudformation, cdk | 5 |
 | lambda-container-image | python | scripts, terraform, cloudformation, cdk | 6 |
+| lambda-event-filtering | javascript | scripts, terraform, cloudformation, cdk | 32 |
 
 ## What "Porting a Sample" Means
 
