@@ -115,6 +115,8 @@ jobs:
           uv tool install awscli
           uv tool install 'awscli-local==0.21'
           uv tool install terraform-local
+          uv tool install chalice
+          uv tool install chalice-local
 
       - name: Install CDK
         if: matrix.iac == 'cdk'

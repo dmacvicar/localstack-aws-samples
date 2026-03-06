@@ -99,7 +99,7 @@ These have scripts/ but need other IaC methods:
 
 ### Medium complexity
 - [x] `cognito-jwt/python` - scripts only (10 tests, core works without SMTP)
-- [ ] `chalice-rest-api` - Chalice framework REST API
+- [x] `chalice-rest-api/python` - scripts only (10 tests, requires chalice-local)
 - [x] `ec2-docker-instances/python` - scripts only (7 tests, requires EC2_VM_MANAGER=docker)
 - [ ] `elb-load-balancing` - ELB (uses Serverless Framework)
 - [ ] `glacier-s3-select` - Glacier + S3 Select
