@@ -29,29 +29,34 @@ This repository contains sample applications demonstrating LocalStack Pro featur
 
 ## Samples
 
+<!-- Test badges are updated automatically by CI. See .github/workflows/run-samples.yml -->
+<!-- Badge URL format: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/USER/GIST_ID/raw/SAMPLE-LANGUAGE.json -->
+
 | Sample | Language | IaC Methods | Tests | Notes |
 |--------|----------|-------------|-------|-------|
-| [lambda-function-urls](samples/lambda-function-urls/) | python, javascript | scripts, terraform, cloudformation, cdk | 7/28 | |
-| [stepfunctions-lambda](samples/stepfunctions-lambda/) | python | scripts, terraform, cloudformation, cdk | 10 | |
-| [web-app-dynamodb](samples/web-app-dynamodb/) | python | scripts, terraform, cloudformation, cdk | 8 | |
-| [lambda-s3-http](samples/lambda-s3-http/) | python | scripts, terraform, cloudformation, cdk | 11 | |
-| [lambda-cloudfront](samples/lambda-cloudfront/) | python | scripts, terraform, cloudformation, cdk | 16 | |
-| [web-app-rds](samples/web-app-rds/) | python | scripts, terraform, cloudformation, cdk | 28 | |
-| [apigw-custom-domain](samples/apigw-custom-domain/) | python | scripts, terraform, cloudformation, cdk | 28 | |
-| [ecs-ecr-app](samples/ecs-ecr-app/) | python | scripts, terraform, cloudformation, cdk | 24 | |
-| [lambda-container-image](samples/lambda-container-image/) | python | scripts, terraform, cloudformation, cdk | 6 | |
-| [apigw-websockets](samples/apigw-websockets/) | javascript | scripts, terraform, cloudformation, cdk | 5 | |
-| [lambda-layers](samples/lambda-layers/) | javascript | scripts, terraform, cloudformation, cdk | 5 | |
-| [lambda-event-filtering](samples/lambda-event-filtering/) | javascript | scripts, terraform, cloudformation, cdk | 32 | |
-| [lambda-xray](samples/lambda-xray/) | python | scripts, terraform, cloudformation, cdk | 24 | |
-| [codecommit-git-repo](samples/codecommit-git-repo/) | python | scripts, terraform | 14 | CloudFormation/CDK unsupported |
-| [iot-basics](samples/iot-basics/) | python | scripts, terraform, cloudformation, cdk | 8 | 1 test skipped (MQTT endpoint) |
-| [athena-s3-queries](samples/athena-s3-queries/) | python | scripts, terraform, cloudformation, cdk | - | Requires Hadoop download |
-| [mq-broker](samples/mq-broker/) | python | scripts, terraform, cloudformation, cdk | - | Requires JDK/ActiveMQ download |
-| [transfer-ftp-s3](samples/transfer-ftp-s3/) | python | scripts | 7 | Terraform/CloudFormation/CDK unsupported |
-| [glacier-s3-select](samples/glacier-s3-select/) | python | scripts | 7 | Terraform/CloudFormation/CDK unsupported |
-| [rds-db-queries](samples/rds-db-queries/) | python | scripts | - | Requires PostgreSQL download |
-| [rds-failover-test](samples/rds-failover-test/) | python | scripts | 7 | Terraform/CloudFormation/CDK unsupported |
+| [lambda-function-urls](samples/lambda-function-urls/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-function-urls-python.json) | |
+| [lambda-function-urls](samples/lambda-function-urls/) | javascript | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-function-urls-javascript.json) | |
+| [stepfunctions-lambda](samples/stepfunctions-lambda/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/stepfunctions-lambda-python.json) | |
+| [web-app-dynamodb](samples/web-app-dynamodb/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/web-app-dynamodb-python.json) | |
+| [lambda-s3-http](samples/lambda-s3-http/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-s3-http-python.json) | |
+| [lambda-cloudfront](samples/lambda-cloudfront/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-cloudfront-python.json) | |
+| [web-app-rds](samples/web-app-rds/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/web-app-rds-python.json) | |
+| [apigw-custom-domain](samples/apigw-custom-domain/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/apigw-custom-domain-python.json) | |
+| [ecs-ecr-app](samples/ecs-ecr-app/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/ecs-ecr-app-python.json) | |
+| [lambda-container-image](samples/lambda-container-image/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-container-image-python.json) | |
+| [apigw-websockets](samples/apigw-websockets/) | javascript | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/apigw-websockets-javascript.json) | |
+| [lambda-layers](samples/lambda-layers/) | javascript | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-layers-javascript.json) | |
+| [lambda-event-filtering](samples/lambda-event-filtering/) | javascript | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-event-filtering-javascript.json) | |
+| [lambda-xray](samples/lambda-xray/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/lambda-xray-python.json) | |
+| [codecommit-git-repo](samples/codecommit-git-repo/) | python | scripts, terraform | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/codecommit-git-repo-python.json) | CloudFormation/CDK unsupported |
+| [iot-basics](samples/iot-basics/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/iot-basics-python.json) | 1 test skipped (MQTT endpoint) |
+| [athena-s3-queries](samples/athena-s3-queries/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/badge/tests-pending-lightgrey) | Requires Hadoop download |
+| [mq-broker](samples/mq-broker/) | python | scripts, terraform, cloudformation, cdk | ![tests](https://img.shields.io/badge/tests-pending-lightgrey) | Requires JDK/ActiveMQ download |
+| [transfer-ftp-s3](samples/transfer-ftp-s3/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/transfer-ftp-s3-python.json) | Terraform/CloudFormation/CDK unsupported |
+| [glacier-s3-select](samples/glacier-s3-select/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/glacier-s3-select-python.json) | Terraform/CloudFormation/CDK unsupported |
+| [rds-db-queries](samples/rds-db-queries/) | python | scripts | ![tests](https://img.shields.io/badge/tests-pending-lightgrey) | Requires PostgreSQL download |
+| [rds-failover-test](samples/rds-failover-test/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/rds-failover-test-python.json) | Terraform/CloudFormation/CDK unsupported |
+| [neptune-graph-db](samples/neptune-graph-db/) | python | scripts | ![tests](https://img.shields.io/badge/tests-pending-lightgrey) | Requires Java/TinkerGraph download |
 
 ## Sample Structure
 

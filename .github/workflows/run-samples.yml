@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
+      samples: ${{ steps.discover.outputs.samples }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,7 +27,10 @@ jobs:
         run: |
           # Build matrix of sample × IaC method combinations
           matrix="["
+          samples="["
           first=true
+          first_sample=true
+          seen_samples=""
 
           for sample_dir in samples/*/; do
             sample=$(basename "$sample_dir")
@@ -34,6 +38,15 @@ jobs:
             for lang_dir in "$sample_dir"*/; do
               [ -d "$lang_dir" ] || continue
               lang=$(basename "$lang_dir")
+
+              # Track unique samples for badge generation
+              sample_key="${sample}/${lang}"
+              if [[ ! " $seen_samples " =~ " $sample_key " ]]; then
+                $first_sample || samples+=","
+                first_sample=false
+                samples+="{\"sample\":\"$sample\",\"language\":\"$lang\"}"
+                seen_samples="$seen_samples $sample_key"
+              fi
 
               # Check for scripts deploy
               if [ -f "$lang_dir/scripts/deploy.sh" ]; then
@@ -54,7 +67,9 @@ jobs:
           done
 
           matrix+="]"
+          samples+="]"
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "samples=$samples" >> $GITHUB_OUTPUT
           echo "Discovered tests: $matrix"
 
   test:
@@ -151,6 +166,7 @@ jobs:
           echo "LocalStack is ready!"
 
       - name: Run tests for ${{ matrix.sample }} (${{ matrix.iac }})
+        id: test
         env:
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
@@ -158,20 +174,41 @@ jobs:
         run: |
           sample_dir="samples/${{ matrix.sample }}"
           lang_dir="$sample_dir/${{ matrix.language }}"
+          result_file="test-results-${{ matrix.sample }}-${{ matrix.language }}-${{ matrix.iac }}.json"
 
           # Check for language-specific test first, then shared test
           if ls "$lang_dir"/test_*.py 1>/dev/null 2>&1; then
             test_path="$lang_dir/"
             # Language-specific test: filter by IaC method only
-            uv run pytest "$test_path" -v --tb=short -k "${{ matrix.iac }}"
+            uv run pytest "$test_path" -v --tb=short -k "${{ matrix.iac }}" \
+              --json-report --json-report-file="$result_file" || true
           elif ls "$sample_dir"/test_*.py 1>/dev/null 2>&1; then
             test_path="$sample_dir/"
             # Shared test: filter by both language and IaC method
-            uv run pytest "$test_path" -v --tb=short -k "${{ matrix.language }} and ${{ matrix.iac }}"
+            uv run pytest "$test_path" -v --tb=short -k "${{ matrix.language }} and ${{ matrix.iac }}" \
+              --json-report --json-report-file="$result_file" || true
           else
             echo "No test file found for ${{ matrix.sample }}/${{ matrix.language }}"
-            exit 1
+            echo '{"summary": {"passed": 0, "failed": 0, "total": 0, "error": "no tests found"}}' > "$result_file"
           fi
+
+          # Extract test counts
+          if [ -f "$result_file" ]; then
+            passed=$(jq -r '.summary.passed // 0' "$result_file")
+            failed=$(jq -r '.summary.failed // 0' "$result_file")
+            total=$(jq -r '.summary.total // 0' "$result_file")
+            echo "passed=$passed" >> $GITHUB_OUTPUT
+            echo "failed=$failed" >> $GITHUB_OUTPUT
+            echo "total=$total" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.sample }}-${{ matrix.language }}-${{ matrix.iac }}
+          path: test-results-*.json
+          retention-days: 7
 
       - name: Capture LocalStack logs
         if: failure()
@@ -184,6 +221,130 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-${{ matrix.sample }}-${{ matrix.iac }}
+          name: logs-${{ matrix.sample }}-${{ matrix.language }}-${{ matrix.iac }}
           path: localstack.log
           retention-days: 7
+
+      - name: Check test results
+        run: |
+          # Fail the job if tests failed
+          if [ "${{ steps.test.outputs.failed }}" != "0" ] && [ "${{ steps.test.outputs.failed }}" != "" ]; then
+            echo "Tests failed: ${{ steps.test.outputs.failed }} failures"
+            exit 1
+          fi
+
+  aggregate-results:
+    name: Aggregate test results
+    needs: [discover, test]
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: results
+          merge-multiple: true
+
+      - name: Aggregate results and create badges
+        run: |
+          mkdir -p badges
+
+          # Create a JSON file for each sample with aggregated results
+          echo '{}' > badges/all-results.json
+
+          for result_file in results/test-results-*.json; do
+            [ -f "$result_file" ] || continue
+
+            # Extract sample, language, iac from filename
+            filename=$(basename "$result_file" .json)
+            # Format: test-results-{sample}-{language}-{iac}
+            sample=$(echo "$filename" | sed 's/test-results-//' | rev | cut -d'-' -f3- | rev)
+            language=$(echo "$filename" | rev | cut -d'-' -f2 | rev)
+            iac=$(echo "$filename" | rev | cut -d'-' -f1 | rev)
+
+            passed=$(jq -r '.summary.passed // 0' "$result_file")
+            failed=$(jq -r '.summary.failed // 0' "$result_file")
+            total=$(jq -r '.summary.total // 0' "$result_file")
+
+            # Create shields.io endpoint badge JSON for this sample/language combo
+            key="${sample}-${language}"
+            badge_file="badges/${key}.json"
+
+            # Accumulate results for this sample
+            if [ -f "$badge_file" ]; then
+              current_passed=$(jq -r '.passed' "$badge_file")
+              current_failed=$(jq -r '.failed' "$badge_file")
+              current_total=$(jq -r '.total' "$badge_file")
+              passed=$((current_passed + passed))
+              failed=$((current_failed + failed))
+              total=$((current_total + total))
+            fi
+
+            # Determine color
+            if [ "$failed" -gt 0 ]; then
+              color="red"
+            elif [ "$total" -eq 0 ]; then
+              color="lightgrey"
+            else
+              color="brightgreen"
+            fi
+
+            # Create badge JSON (shields.io endpoint format)
+            cat > "$badge_file" << EOF
+          {
+            "schemaVersion": 1,
+            "label": "tests",
+            "message": "${passed}/${total} passed",
+            "color": "${color}",
+            "passed": ${passed},
+            "failed": ${failed},
+            "total": ${total}
+          }
+          EOF
+
+            echo "Created badge for $key: ${passed}/${total} passed"
+          done
+
+          # Combine all results into one file
+          echo '{' > badges/all-results.json
+          first=true
+          for badge_file in badges/*.json; do
+            [ "$badge_file" = "badges/all-results.json" ] && continue
+            [ -f "$badge_file" ] || continue
+
+            key=$(basename "$badge_file" .json)
+            $first || echo ',' >> badges/all-results.json
+            first=false
+            echo "\"$key\": $(cat "$badge_file")" >> badges/all-results.json
+          done
+          echo '}' >> badges/all-results.json
+
+          echo "=== All Results ==="
+          cat badges/all-results.json
+
+      - name: Update Gist with badge data
+        if: env.GIST_TOKEN != ''
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.TEST_BADGES_GIST_ID }}
+        run: |
+          # Update the gist with all badge files
+          for badge_file in badges/*.json; do
+            [ -f "$badge_file" ] || continue
+            filename=$(basename "$badge_file")
+
+            # Escape JSON content for the API
+            content=$(jq -c '.' "$badge_file" | jq -Rs '.')
+
+            curl -s -X PATCH \
+              -H "Authorization: token $GIST_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/gists/$GIST_ID" \
+              -d "{\"files\":{\"$filename\":{\"content\":$(cat "$badge_file" | jq -Rs '.')}}}"
+
+            echo "Updated gist file: $filename"
+          done
