@@ -10,6 +10,8 @@ dependencies = [
     "tenacity>=8.0",
     "requests>=2.31",
     "websockets>=12.0",
+    "aws-cdk-lib>=2.100.0",
+    "constructs>=10.0.0",
 ]
 
 [tool.pytest.ini_options]

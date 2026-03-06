@@ -1,0 +1,8 @@
+{
+  "LambdaXRayStack": {
+    "FunctionArn": "arn:aws:lambda:us-east-1:000000000000:function:xray-demo-1772822601",
+    "FunctionName": "xray-demo-1772822601",
+    "RoleArn": "arn:aws:iam::000000000000:role/xray-demo-role-1772822601",
+    "RoleName": "xray-demo-role-1772822601"
+  }
+}

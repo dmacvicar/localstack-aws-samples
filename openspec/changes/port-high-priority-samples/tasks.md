@@ -85,8 +85,8 @@ These have scripts/ but need other IaC methods:
 ## Remaining Samples to Port (from localstack-pro-samples-original)
 
 ### Simple (no heavy dependencies)
-- [ ] `qldb-ledger-queries` - QLDB queries (Python script)
-- [ ] `lambda-xray` - X-Ray tracing
+- [x] `qldb-ledger-queries` - SKIP: AWS deprecated QLDB (EOL July 2025)
+- [x] `lambda-xray/python` - All 4 IaC methods (24 tests pass)
 - [ ] `cloudwatch-metrics-aws` - CloudWatch metrics
 - [ ] `iam-policy-enforcement` - IAM policy testing
 - [ ] `codecommit-git-repo` - CodeCommit repository

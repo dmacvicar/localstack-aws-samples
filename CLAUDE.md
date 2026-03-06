@@ -64,6 +64,7 @@ samples/<sample-name>/<language>/
 | lambda-layers | javascript | scripts, terraform, cloudformation, cdk | 5 |
 | lambda-container-image | python | scripts, terraform, cloudformation, cdk | 6 |
 | lambda-event-filtering | javascript | scripts, terraform, cloudformation, cdk | 32 |
+| lambda-xray | python | scripts, terraform, cloudformation, cdk | 24 |
 
 ## What "Porting a Sample" Means
 
