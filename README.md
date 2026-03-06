@@ -31,7 +31,7 @@ This repository contains sample applications demonstrating LocalStack Pro featur
 
 | Sample | Language | IaC Methods | Tests | Notes |
 |--------|----------|-------------|-------|-------|
-| [lambda-function-urls](samples/lambda-function-urls/) | python | scripts, terraform, cloudformation, cdk | 7 | |
+| [lambda-function-urls](samples/lambda-function-urls/) | python, javascript | scripts, terraform, cloudformation, cdk | 7/28 | |
 | [stepfunctions-lambda](samples/stepfunctions-lambda/) | python | scripts, terraform, cloudformation, cdk | 10 | |
 | [web-app-dynamodb](samples/web-app-dynamodb/) | python | scripts, terraform, cloudformation, cdk | 8 | |
 | [lambda-s3-http](samples/lambda-s3-http/) | python | scripts, terraform, cloudformation, cdk | 11 | |

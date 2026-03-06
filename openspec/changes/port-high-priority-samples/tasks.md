@@ -14,6 +14,7 @@ Each sample must include:
 These have scripts/ but need other IaC methods:
 
 - [x] `lambda-function-urls/python` - All 4 IaC methods complete
+- [x] `lambda-function-urls/javascript` - All 4 IaC methods (28 tests pass)
 - [x] `stepfunctions-lambda/python` - All 4 IaC methods complete
 - [x] `web-app-dynamodb/python` - All 4 IaC methods complete
 - [x] `lambda-s3-http/python` - All 4 IaC methods complete

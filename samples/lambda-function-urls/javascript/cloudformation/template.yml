@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda Function URLs Sample (JavaScript)
+
+Parameters:
+  Suffix:
+    Type: String
+    Description: Resource name suffix
+    Default: ""
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "lambda-role-${Suffix}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "lambda-url-js-${Suffix}"
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      MemorySize: 128
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+              let body;
+              if (typeof event.body === 'string') {
+                  body = JSON.parse(event.body);
+              } else if (event.body) {
+                  body = event.body;
+              } else {
+                  body = event;
+              }
+              const num1 = parseFloat(body.num1) || 0;
+              const num2 = parseFloat(body.num2) || 0;
+              const product = num1 * num2;
+              return {
+                  statusCode: 200,
+                  body: JSON.stringify({
+                      message: `The product of ${num1} and ${num2} is ${product}`,
+                      result: product
+                  }),
+              };
+          };
+
+  LambdaFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt LambdaFunction.Arn
+
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+Outputs:
+  FunctionName:
+    Description: Lambda function name
+    Value: !Ref LambdaFunction
+
+  FunctionUrl:
+    Description: Lambda function URL
+    Value: !GetAtt LambdaFunctionUrl.FunctionUrl
+
+  RoleName:
+    Description: IAM role name
+    Value: !Ref LambdaRole

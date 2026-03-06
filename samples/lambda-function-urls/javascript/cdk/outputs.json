@@ -1,0 +1,7 @@
+{
+  "LambdaFunctionUrlsJsStack": {
+    "FunctionNameOutput": "lambda-url-js-1772831451",
+    "FunctionUrlOutput": "http://vmmikdzeup5ynrvdr13lb3ynskgzll1p.lambda-url.us-east-1.localhost.localstack.cloud:4566/",
+    "RoleNameOutput": "lambda-role-1772831451"
+  }
+}
