@@ -59,6 +59,7 @@ This repository contains sample applications demonstrating LocalStack Pro featur
 | [neptune-graph-db](samples/neptune-graph-db/) | python | scripts | ![tests](https://img.shields.io/badge/tests-pending-lightgrey) | Requires Java/TinkerGraph download |
 | [iam-policy-enforcement](samples/iam-policy-enforcement/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/iam-policy-enforcement-python.json) | Requires ENFORCE_IAM=1 |
 | [ec2-docker-instances](samples/ec2-docker-instances/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/ec2-docker-instances-python.json) | Requires EC2_VM_MANAGER=docker |
+| [cloudwatch-metrics-aws](samples/cloudwatch-metrics-aws/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/cloudwatch-metrics-aws-python.json) | Email requires SMTP |
 
 ## Sample Structure
 
