@@ -98,7 +98,7 @@ These have scripts/ but need other IaC methods:
 - [x] `glacier-s3-select/python` - scripts only (7 tests pass, Terraform times out, CloudFormation/CDK unsupported)
 
 ### Medium complexity
-- [ ] `cognito-jwt` - Cognito JWT (requires SMTP - may skip)
+- [x] `cognito-jwt/python` - scripts only (10 tests, core works without SMTP)
 - [ ] `chalice-rest-api` - Chalice framework REST API
 - [x] `ec2-docker-instances/python` - scripts only (7 tests, requires EC2_VM_MANAGER=docker)
 - [ ] `elb-load-balancing` - ELB (uses Serverless Framework)

@@ -60,6 +60,7 @@ This repository contains sample applications demonstrating LocalStack Pro featur
 | [iam-policy-enforcement](samples/iam-policy-enforcement/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/iam-policy-enforcement-python.json) | Requires ENFORCE_IAM=1 |
 | [ec2-docker-instances](samples/ec2-docker-instances/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/ec2-docker-instances-python.json) | Requires EC2_VM_MANAGER=docker |
 | [cloudwatch-metrics-aws](samples/cloudwatch-metrics-aws/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/cloudwatch-metrics-aws-python.json) | Email requires SMTP |
+| [cognito-jwt](samples/cognito-jwt/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/cognito-jwt-python.json) | Email verification requires SMTP |
 
 ## Sample Structure
 
