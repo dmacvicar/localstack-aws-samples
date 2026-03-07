@@ -46,15 +46,32 @@ echo "$DEPLOY_OUTPUT"
 
 # Extract API URL from output
 # chalice-local outputs: Rest API URL: https://xxx.execute-api...
-API_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Rest API URL: \K.*' || echo "")
+RAW_API_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Rest API URL: \K.*' || echo "")
 
-if [ -z "$API_URL" ]; then
+if [ -z "$RAW_API_URL" ]; then
     # Try alternate format
-    API_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'https?://[^ ]+' | head -1 || echo "")
+    RAW_API_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'https?://[^ ]+' | head -1 || echo "")
+fi
+
+# Convert the API Gateway URL to LocalStack path-based format
+# From: https://xxx.execute-api.us-east-1.amazonaws.com/api
+# To: http://localhost.localstack.cloud:4566/restapis/xxx/api/_user_request_
+if [[ "$RAW_API_URL" =~ ^https?://([^.]+)\.execute-api\.[^/]+/([^/]+)(.*)$ ]]; then
+    API_ID="${BASH_REMATCH[1]}"
+    STAGE="${BASH_REMATCH[2]}"
+    PATH_SUFFIX="${BASH_REMATCH[3]}"
+
+    LOCALSTACK_ENDPOINT="${LOCALSTACK_ENDPOINT:-http://localhost.localstack.cloud:4566}"
+    API_URL="${LOCALSTACK_ENDPOINT}/restapis/${API_ID}/${STAGE}/_user_request_${PATH_SUFFIX}"
+    echo "Converted API Gateway URL for LocalStack compatibility"
+else
+    # Fallback to raw URL
+    API_URL="$RAW_API_URL"
 fi
 
 echo ""
 echo "Chalice REST API deployed successfully!"
+echo "  Raw API URL: $RAW_API_URL"
 echo "  API URL: $API_URL"
 
 # Write environment variables
