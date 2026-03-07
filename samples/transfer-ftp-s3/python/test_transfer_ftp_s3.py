@@ -174,9 +174,6 @@ class TestTransferFtpS3:
             files = ftp.nlst()
             # Should be able to list (may be empty or have test files)
             assert isinstance(files, list)
-        except (ConnectionRefusedError, OSError, TimeoutError) as e:
-            # FTP server may not be ready or has closed the connection
-            pytest.skip(f"FTP server not available: {e}")
         finally:
             try:
                 ftp.quit()

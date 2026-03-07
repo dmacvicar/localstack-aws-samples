@@ -93,19 +93,13 @@ class TestMQBroker:
         broker_id = deployed_env["BROKER_ID"]
         username = deployed_env["USERNAME"]
 
-        try:
-            response = aws_clients.mq_client.describe_user(
-                BrokerId=broker_id,
-                Username=username
-            )
+        response = aws_clients.mq_client.describe_user(
+            BrokerId=broker_id,
+            Username=username
+        )
 
-            assert response["Username"] == username
-            assert response["ConsoleAccess"] is True
-        except Exception as e:
-            # LocalStack may not support DescribeUser operation
-            if "not currently supported" in str(e):
-                pytest.skip("DescribeUser not supported by LocalStack")
-            raise
+        assert response["Username"] == username
+        assert response["ConsoleAccess"] is True
 
     def test_send_message_to_queue(self, deployed_env):
         """Should be able to send a message to a queue via HTTP API."""
@@ -120,23 +114,16 @@ class TestMQBroker:
         # Format: http://host:port/api/message?destination=queue://name
         api_url = f"{console_url}/api/message"
 
-        try:
-            response = requests.post(
-                api_url,
-                params={"destination": "queue://test.queue"},
-                data={"body": "test message"},
-                auth=(username, password),
-                timeout=10,
-            )
+        response = requests.post(
+            api_url,
+            params={"destination": "queue://test.queue"},
+            data={"body": "test message"},
+            auth=(username, password),
+            timeout=10,
+        )
 
-            # ActiveMQ returns 200 on success
-            assert response.status_code == 200, f"Failed to send message: {response.text}"
-
-        except requests.exceptions.ConnectionError as e:
-            pytest.skip(f"Could not connect to broker: {e}")
-        except requests.exceptions.RequestException as e:
-            # MQ broker may require dependencies (JDK/ActiveMQ) to be fully functional
-            pytest.skip(f"Broker not fully operational: {e}")
+        # ActiveMQ returns 200 on success
+        assert response.status_code == 200, f"Failed to send message: {response.text}"
 
     def test_list_brokers(self, deployed_env, aws_clients):
         """Broker should appear in list of brokers."""
