@@ -67,6 +67,14 @@ samples/<sample-name>/<language>/
 | lambda-xray | python | scripts, terraform, cloudformation, cdk | 24 |
 | codecommit-git-repo | python | scripts, terraform | 14 |
 | chalice-rest-api | python | scripts, terraform, cloudformation, cdk | 40 |
+| transfer-ftp-s3 | python | scripts, terraform, cloudformation, cdk | 28 |
+| glacier-s3-select | python | scripts, terraform, cloudformation, cdk | 28 |
+| rds-failover-test | python | scripts, terraform, cloudformation, cdk | 28 |
+| cloudwatch-metrics-aws | python | scripts, terraform, cloudformation, cdk | 36 |
+| cognito-jwt | python | scripts, terraform, cloudformation, cdk | 40 |
+| ec2-docker-instances | python | scripts, terraform, cloudformation, cdk | 28 |
+| elb-load-balancing | javascript | scripts, terraform, cloudformation, cdk | 44 |
+| iam-policy-enforcement | python | scripts, terraform, cloudformation, cdk | 32 |
 
 ## What "Porting a Sample" Means
 
@@ -97,13 +105,15 @@ Each sample must include:
 See `openspec/changes/port-high-priority-samples/tasks.md` for current state.
 
 ### Recently Completed
-- `lambda-layers/javascript` - Full port with all 4 IaC methods + teardown scripts
-- `apigw-websockets/javascript` - Full port with all 4 IaC methods + teardown scripts
-- `ecs-ecr-app/python` - Full port with all 4 IaC methods + teardown scripts
-- `apigw-custom-domain/python` - Full port with all 4 IaC methods + teardown scripts
-- `web-app-rds/python` - Full port with all 4 IaC methods + teardown scripts
-- `lambda-cloudfront/python` - Full port with all 4 IaC methods + teardown scripts
-- `lambda-container-image/python` - Full port with all 4 IaC methods + teardown scripts
+- `chalice-rest-api/python` - Full port with all 4 IaC methods
+- `transfer-ftp-s3/python` - Full port with all 4 IaC methods
+- `glacier-s3-select/python` - Full port with all 4 IaC methods
+- `rds-failover-test/python` - Full port with all 4 IaC methods
+- `cloudwatch-metrics-aws/python` - Full port with all 4 IaC methods
+- `cognito-jwt/python` - Full port with all 4 IaC methods
+- `ec2-docker-instances/python` - Full port with all 4 IaC methods
+- `elb-load-balancing/javascript` - Full port with all 4 IaC methods
+- `iam-policy-enforcement/python` - Full port with all 4 IaC methods
 
 ### Next Steps
 - All current samples now have all 4 IaC methods
