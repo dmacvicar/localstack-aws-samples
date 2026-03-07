@@ -99,7 +99,7 @@ These have scripts/ but need other IaC methods:
 
 ### Medium complexity
 - [x] `cognito-jwt/python` - scripts only (10 tests, core works without SMTP)
-- [x] `chalice-rest-api/python` - scripts only (10 tests, requires chalice-local)
+- [x] `chalice-rest-api/python` - All 4 IaC methods (10 tests × 4 = 40 tests, scripts uses chalice-local, others use Lambda+APIGW)
 - [x] `ec2-docker-instances/python` - scripts only (7 tests, requires EC2_VM_MANAGER=docker)
 - [x] `elb-load-balancing/javascript` - scripts only (11 tests, ALB with Lambda targets)
 - [~] `neptune-graph-db/python` - scripts only, NEEDS TESTING (requires Java/TinkerGraph download)

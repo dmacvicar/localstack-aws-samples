@@ -31,7 +31,7 @@ SAMPLE_NAME = "chalice-rest-api"
 LANGUAGE = "python"
 
 # IaC methods to test
-IAC_METHODS = ["scripts"]
+IAC_METHODS = ["scripts", "terraform", "cloudformation", "cdk"]
 
 
 @pytest.fixture(scope="module", params=IAC_METHODS)
