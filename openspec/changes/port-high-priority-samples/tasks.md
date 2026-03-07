@@ -101,7 +101,7 @@ These have scripts/ but need other IaC methods:
 - [x] `cognito-jwt/python` - scripts only (10 tests, core works without SMTP)
 - [x] `chalice-rest-api/python` - scripts only (10 tests, requires chalice-local)
 - [x] `ec2-docker-instances/python` - scripts only (7 tests, requires EC2_VM_MANAGER=docker)
-- [ ] `elb-load-balancing` - ELB (uses Serverless Framework)
+- [x] `elb-load-balancing/javascript` - scripts only (11 tests, ALB with Lambda targets)
 - [ ] `glacier-s3-select` - Glacier + S3 Select
 - [~] `neptune-graph-db/python` - scripts only, NEEDS TESTING (requires Java/TinkerGraph download)
 - [x] `rds-failover-test/python` - scripts only (7 tests pass, Terraform/CloudFormation/CDK unsupported)

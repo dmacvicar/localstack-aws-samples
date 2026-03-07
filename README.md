@@ -62,6 +62,7 @@ This repository contains sample applications demonstrating LocalStack Pro featur
 | [cloudwatch-metrics-aws](samples/cloudwatch-metrics-aws/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/cloudwatch-metrics-aws-python.json) | Email requires SMTP |
 | [cognito-jwt](samples/cognito-jwt/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/cognito-jwt-python.json) | Email verification requires SMTP |
 | [chalice-rest-api](samples/chalice-rest-api/) | python | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/chalice-rest-api-python.json) | Requires chalice-local |
+| [elb-load-balancing](samples/elb-load-balancing/) | javascript | scripts | ![tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dmacvicar/e64cef04f2bd02e575280d4b1184f479/raw/elb-load-balancing-javascript.json) | ALB with Lambda targets |
 
 ## Sample Structure
 
