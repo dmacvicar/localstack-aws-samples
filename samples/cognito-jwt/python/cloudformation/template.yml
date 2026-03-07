@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cognito JWT Authentication
+
+Parameters:
+  PoolName:
+    Type: String
+    Default: test-user-pool
+  ClientName:
+    Type: String
+    Default: test-client
+
+Resources:
+  # Cognito User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref PoolName
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      AutoVerifiedAttributes:
+        - email
+      UserPoolTags:
+        Name: !Ref PoolName
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Ref ClientName
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+Outputs:
+  PoolName:
+    Value: !Ref PoolName
+  PoolId:
+    Value: !Ref UserPool
+  PoolArn:
+    Value: !GetAtt UserPool.Arn
+  ClientName:
+    Value: !Ref ClientName
+  ClientId:
+    Value: !Ref UserPoolClient

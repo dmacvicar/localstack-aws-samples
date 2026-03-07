@@ -32,7 +32,7 @@ SAMPLE_NAME = "elb-load-balancing"
 LANGUAGE = "javascript"
 
 # IaC methods to test
-IAC_METHODS = ["scripts"]
+IAC_METHODS = ["scripts", "terraform", "cloudformation", "cdk"]
 
 
 def elbv2_client():

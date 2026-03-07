@@ -34,7 +34,7 @@ SAMPLE_NAME = "cognito-jwt"
 LANGUAGE = "python"
 
 # IaC methods to test
-IAC_METHODS = ["scripts"]
+IAC_METHODS = ["scripts", "terraform", "cloudformation", "cdk"]
 
 
 def cognito_client():

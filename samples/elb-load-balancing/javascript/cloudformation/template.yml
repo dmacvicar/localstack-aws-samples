@@ -1,0 +1,239 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ELB Load Balancing with Lambda targets
+
+Parameters:
+  LBName:
+    Type: String
+    Default: elb-test
+  FunctionPrefix:
+    Type: String
+    Default: elb-handler
+
+Resources:
+  # VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: elb-vpc
+
+  # Subnets
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Sub ${AWS::Region}a
+      Tags:
+        - Key: Name
+          Value: elb-subnet-1
+
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Sub ${AWS::Region}b
+      Tags:
+        - Key: Name
+          Value: elb-subnet-2
+
+  # Security Group
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: elb-sg
+      GroupDescription: Security group for ELB
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: elb-sg
+
+  # IAM Role for Lambda
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: elb-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda Function 1
+  LambdaHello1:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${FunctionPrefix}-hello1
+      Runtime: nodejs18.x
+      Handler: handler.hello1
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          module.exports.hello1 = async (event) => {
+              return {
+                  isBase64Encoded: false,
+                  statusCode: 200,
+                  statusDescription: '200 OK',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ message: 'Hello 1', path: '/hello1' })
+              };
+          };
+
+  # Lambda Function 2
+  LambdaHello2:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${FunctionPrefix}-hello2
+      Runtime: nodejs18.x
+      Handler: handler.hello2
+      Role: !GetAtt LambdaRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          module.exports.hello2 = async (event) => {
+              return {
+                  isBase64Encoded: false,
+                  statusCode: 200,
+                  statusDescription: '200 OK',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ message: 'Hello 2', path: '/hello2' })
+              };
+          };
+
+  # Lambda Permissions for ALB
+  LambdaPermission1:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaHello1
+      Action: lambda:InvokeFunction
+      Principal: elasticloadbalancing.amazonaws.com
+      SourceArn: !Ref TargetGroup1
+
+  LambdaPermission2:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaHello2
+      Action: lambda:InvokeFunction
+      Principal: elasticloadbalancing.amazonaws.com
+      SourceArn: !Ref TargetGroup2
+
+  # Application Load Balancer
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Ref LBName
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref SecurityGroup
+      Subnets:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      Tags:
+        - Key: Name
+          Value: !Ref LBName
+
+  # Target Groups
+  TargetGroup1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: tg-hello1
+      TargetType: lambda
+      Targets:
+        - Id: !GetAtt LambdaHello1.Arn
+
+  TargetGroup2:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: tg-hello2
+      TargetType: lambda
+      Targets:
+        - Id: !GetAtt LambdaHello2.Arn
+
+  # Listener
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: '404'
+            ContentType: text/plain
+            MessageBody: Not Found
+
+  # Listener Rules
+  ListenerRule1:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref Listener
+      Priority: 1
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup1
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /hello1
+
+  ListenerRule2:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref Listener
+      Priority: 2
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup2
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /hello2
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+  Subnet1Id:
+    Value: !Ref Subnet1
+  Subnet2Id:
+    Value: !Ref Subnet2
+  SecurityGroupId:
+    Value: !Ref SecurityGroup
+  LBName:
+    Value: !Ref LBName
+  LBArn:
+    Value: !Ref LoadBalancer
+  LBDNS:
+    Value: !GetAtt LoadBalancer.DNSName
+  ListenerArn:
+    Value: !Ref Listener
+  TG1Arn:
+    Value: !Ref TargetGroup1
+  TG2Arn:
+    Value: !Ref TargetGroup2
+  Func1Name:
+    Value: !Ref LambdaHello1
+  Func1Arn:
+    Value: !GetAtt LambdaHello1.Arn
+  Func2Name:
+    Value: !Ref LambdaHello2
+  Func2Arn:
+    Value: !GetAtt LambdaHello2.Arn
+  ELBURL:
+    Value: !Sub http://${LoadBalancer.DNSName}:4566

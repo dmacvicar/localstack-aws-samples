@@ -102,7 +102,6 @@ These have scripts/ but need other IaC methods:
 - [x] `chalice-rest-api/python` - scripts only (10 tests, requires chalice-local)
 - [x] `ec2-docker-instances/python` - scripts only (7 tests, requires EC2_VM_MANAGER=docker)
 - [x] `elb-load-balancing/javascript` - scripts only (11 tests, ALB with Lambda targets)
-- [ ] `glacier-s3-select` - Glacier + S3 Select
 - [~] `neptune-graph-db/python` - scripts only, NEEDS TESTING (requires Java/TinkerGraph download)
 - [x] `rds-failover-test/python` - scripts only (7 tests pass, Terraform/CloudFormation/CDK unsupported)
 - [ ] `route53-dns-failover` - Route53 DNS failover
